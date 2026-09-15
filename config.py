@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GIU_USERNAME = os.environ["USERNAME"]
-GIU_PASSWORD = os.environ["PASSWORD"]
+GIU_USERNAME = os.environ["GIU_USERNAME"]
+GIU_PASSWORD = os.environ["GIU_PASSWORD"]
 BASE_URL = "https://cms.giu-uni.de"
 
 _download_root_env = os.environ.get("DOWNLOAD_ROOT", "").strip()

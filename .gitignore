@@ -431,3 +431,9 @@ FodyWeavers.xsd
 # User variables
 state.json
 course_mapping.json
+.venv/
+
+# Build files
+build/
+dist/
+*.spec

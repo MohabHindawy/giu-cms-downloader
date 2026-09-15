@@ -5,6 +5,12 @@ from pathlib import Path
 from course_config import load_mapping, save_mapping, read_env, write_env, CourseConfig
 
 
+def get_app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent
+
+
 def prompt(question: str, default: str = "") -> str:
     suffix = f" [{default}]" if default else ""
     answer = input(f"{question}{suffix}: ").strip()
@@ -23,8 +29,8 @@ def configure_credentials() -> dict[str, str]:
     print("=== GIU CMS Login ===\n")
     env = read_env()
 
-    username = prompt("GIU username", env.get("USERNAME", ""))
-    password = prompt("GIU password", env.get("PASSWORD", ""))
+    username = prompt("GIU username", env.get("GIU_USERNAME", ""))
+    password = prompt("GIU password", env.get("GIU_PASSWORD", ""))
 
     default_root = env.get("DOWNLOAD_ROOT", "")
     print("\nWhere should your university folder live?")
@@ -32,8 +38,8 @@ def configure_credentials() -> dict[str, str]:
     download_root = prompt("Folder", default_root)
 
     new_env = {
-        "USERNAME": username,
-        "PASSWORD": password,
+        "GIU_USERNAME": username,
+        "GIU_PASSWORD": password,
         "DOWNLOAD_ROOT": download_root,
     }
     write_env(new_env)
@@ -68,7 +74,7 @@ def configure_courses(env: dict[str, str]):
 
     print("\n=== Course Setup ===")
     print("Logging in and fetching your courses...")
-    session = get_session(env["USERNAME"], env["PASSWORD"])
+    session = get_session(env["GIU_USERNAME"], env["GIU_PASSWORD"])
     courses = get_courses(session, BASE_URL)
 
     mapping = load_mapping()
@@ -89,13 +95,12 @@ def install_scheduled_task():
         print("Skipped. You can run this wizard again anytime to enable it.")
         return
 
-    script_dir = Path(__file__).resolve().parent
-    python_exe = script_dir / ".venv" / "Scripts" / "python.exe"
-    main_py = script_dir / "main.py"
+    app_dir = get_app_dir()
+    downloader_exe = app_dir / "giu-downloader.exe"
 
     result = subprocess.run([
         "schtasks", "/Create", "/TN", "GIU CMS Downloader",
-        "/TR", f'"{python_exe}" "{main_py}"',
+        "/TR", f'"{downloader_exe}"',
         "/SC", "HOURLY",
         "/RL", "LIMITED",
         "/F",
@@ -118,7 +123,7 @@ def main():
     else:
         print("\nAutomatic scheduling isn't set up by this wizard on non-Windows systems.")
 
-    print("\nAll done! Run 'run-now.bat' anytime to check for new files manually.")
+    print("\nAll done! Run 'giu-downloader.exe' anytime to check for new files manually.")
 
 
 if __name__ == "__main__":
