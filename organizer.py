@@ -16,5 +16,5 @@ def target_path(cf: CourseFile, cfg: CourseConfig) -> Path:
         base = base / sanitize(cf.item_type or "Other")
 
     ext = PurePosixPath(cf.url).suffix
-    name = f"{cf.number} - {sanitize(cf.title)}{ext}"
+    name = f"{sanitize(cf.title)}{ext}"
     return base / name
