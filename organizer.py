@@ -1,18 +1,20 @@
 import re
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from models import CourseFile
+from course_config import CourseConfig
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*]')
+
 
 def sanitize(name: str) -> str:
     return INVALID_CHARS.sub("", name).strip()
 
-def folder_path(cf: CourseFile) -> str:
-    course_folder = sanitize(cf.course.name)
-    type_folder = sanitize(cf.item_type) or "Other"
-    return f"{course_folder}/{type_folder}"
 
-def file_name(cf: CourseFile) -> str:
+def target_path(cf: CourseFile, cfg: CourseConfig) -> Path:
+    base = Path(cfg.folder)
+    if not cfg.flat:
+        base = base / sanitize(cf.item_type or "Other")
+
     ext = PurePosixPath(cf.url).suffix
-    title = sanitize(cf.title)
-    return f"{cf.number} - {title}{ext}"
+    name = f"{cf.number} - {sanitize(cf.title)}{ext}"
+    return base / name

@@ -428,5 +428,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# State
+# User variables
 state.json
+course_mapping.json

@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 from models import CourseFile
-from organizer import folder_path, file_name
+from course_config import CourseConfig
+from organizer import target_path
 
 STATE_FILE = "state.json"
 
@@ -19,22 +20,21 @@ def save_state(downloaded_ids: set[str]) -> None:
         json.dump(sorted(downloaded_ids), f, indent=2)
 
 
-def download_file(session, cf: CourseFile, download_root: str) -> Path:
-    target_dir = Path(download_root) / folder_path(cf)
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target_path = target_dir / file_name(cf)
+def download_file(session, cf: CourseFile, cfg: CourseConfig) -> Path:
+    path = target_path(cf, cfg)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     resp = session.get(cf.url, stream=True)
     resp.raise_for_status()
 
-    with target_path.open("wb") as f:
+    with path.open("wb") as f:
         for chunk in resp.iter_content(chunk_size=8192):
             f.write(chunk)
 
-    return target_path
+    return path
 
 
-def download_all(session, files: list[CourseFile], download_root: str) -> None:
+def download_all(session, files: list[CourseFile], mapping: dict[str, CourseConfig]) -> None:
     downloaded_ids = load_state()
 
     for cf in files:
@@ -42,9 +42,14 @@ def download_all(session, files: list[CourseFile], download_root: str) -> None:
             print(f"Skipping (already downloaded): {cf.title}")
             continue
 
+        cfg = mapping.get(cf.course.code)
+        if cfg is None:
+            print(f"Skipping (not configured): {cf.course.code} - {cf.title}")
+            continue
+
         print(f"Downloading: {cf.title} ...")
         try:
-            path = download_file(session, cf, download_root)
+            path = download_file(session, cf, cfg)
             print(f"  -> saved to {path}")
             downloaded_ids.add(cf.content_id)
             save_state(downloaded_ids)
