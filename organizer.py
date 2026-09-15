@@ -1,13 +1,30 @@
 import re
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from urllib.parse import urlparse, unquote
 from models import CourseFile
 from course_config import CourseConfig
 
-INVALID_CHARS = re.compile(r'[<>:"/\\|?*]')
+INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+RESERVED_NAMES = {
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
 
 
 def sanitize(name: str) -> str:
-    return INVALID_CHARS.sub("", name).strip()
+    name = INVALID_CHARS.sub("", name).strip()
+    name = name.rstrip(". ")
+    if not name:
+        name = "untitled"
+    if name.split(".", 1)[0].upper() in RESERVED_NAMES:
+        name = f"_{name}"
+    return name
+
+
+def get_extension(url: str) -> str:
+    path = urlparse(url).path
+    return Path(unquote(path)).suffix
 
 
 def target_path(cf: CourseFile, cfg: CourseConfig) -> Path:
@@ -15,6 +32,6 @@ def target_path(cf: CourseFile, cfg: CourseConfig) -> Path:
     if not cfg.flat:
         base = base / sanitize(cf.item_type or "Other")
 
-    ext = PurePosixPath(cf.url).suffix
+    ext = get_extension(cf.url)
     name = f"{sanitize(cf.title)}{ext}"
     return base / name

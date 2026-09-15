@@ -2,21 +2,28 @@ import re
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from models import Course, CourseFile
+from config import REQUEST_TIMEOUT
 
 COURSE_LIST_URL = "/apps/student/HomePageStn.aspx"
 COURSE_ROW_RE = re.compile(r"\(\|(?P<code>[^|]+)\|\)\s*(?P<name>.+?)\s*\(\d+\)\s*$")
 
 
 def get_courses(session, base_url: str) -> list[Course]:
-    resp = session.get(urljoin(base_url, COURSE_LIST_URL))
+    resp = session.get(urljoin(base_url, COURSE_LIST_URL), timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
 
-    courses = []
     table = soup.find("table", id=re.compile(r"GridViewcourses$"))
+    if table is None:
+        raise RuntimeError(
+            "Couldn't find the course list on the CMS page. "
+            "This usually means login failed, or the CMS page layout has changed."
+        )
+
+    courses = []
     for row in table.find_all("tr")[1:]:
         cells = row.find_all("td")
-        if not cells:
+        if len(cells) < 6:
             continue
 
         name_cell = cells[1].get_text(strip=True)
@@ -38,7 +45,7 @@ def get_courses(session, base_url: str) -> list[Course]:
 
 def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]:
     url = urljoin(base_url, f"/apps/student/CourseViewStn.aspx?id={course.id}&sid={course.season_id}")
-    resp = session.get(url)
+    resp = session.get(url, timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
 
@@ -66,8 +73,10 @@ def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]
             if not link or not link.get("href"):
                 continue
 
-            content_id = link.get("data-contentid", "")
             file_url = urljoin(base_url, link["href"])
+            content_id = link.get("data-contentid")
+            if not content_id:
+                content_id = f"url:{file_url}"
 
             files.append(CourseFile(
                 course=course,

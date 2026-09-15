@@ -1,9 +1,9 @@
 import json
 from dataclasses import dataclass, asdict
-from pathlib import Path
+from paths import get_app_dir
 
-ENV_FILE = ".env"
-MAPPING_FILE = "course_mapping.json"
+ENV_FILE = get_app_dir() / ".env"
+MAPPING_FILE = get_app_dir() / "course_mapping.json"
 
 
 @dataclass
@@ -14,25 +14,25 @@ class CourseConfig:
 
 
 def load_mapping() -> dict[str, CourseConfig]:
-    path = Path(MAPPING_FILE)
-    if not path.exists():
+    if not MAPPING_FILE.exists():
         return {}
-    with path.open("r") as f:
+    with MAPPING_FILE.open("r") as f:
         raw = json.load(f)
     return {code: CourseConfig(**data) for code, data in raw.items()}
 
 
 def save_mapping(mapping: dict[str, CourseConfig]) -> None:
     raw = {code: asdict(cfg) for code, cfg in mapping.items()}
-    with Path(MAPPING_FILE).open("w") as f:
+    tmp = MAPPING_FILE.with_suffix(".tmp")
+    with tmp.open("w") as f:
         json.dump(raw, f, indent=2)
+    tmp.replace(MAPPING_FILE)
 
 
 def read_env() -> dict[str, str]:
-    path = Path(ENV_FILE)
     values = {}
-    if path.exists():
-        for line in path.read_text().splitlines():
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text().splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
@@ -43,4 +43,6 @@ def read_env() -> dict[str, str]:
 
 def write_env(values: dict[str, str]) -> None:
     lines = [f"{key}={value}" for key, value in values.items()]
-    Path(ENV_FILE).write_text("\n".join(lines) + "\n")
+    tmp = ENV_FILE.with_suffix(".tmp")
+    tmp.write_text("\n".join(lines) + "\n")
+    tmp.replace(ENV_FILE)

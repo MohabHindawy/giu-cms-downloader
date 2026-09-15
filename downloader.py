@@ -3,34 +3,39 @@ from pathlib import Path
 from models import CourseFile
 from course_config import CourseConfig
 from organizer import target_path
+from paths import get_app_dir
+from config import REQUEST_TIMEOUT
 
-STATE_FILE = "state.json"
+STATE_FILE = get_app_dir() / "state.json"
 
 
 def load_state() -> set[str]:
-    path = Path(STATE_FILE)
-    if not path.exists():
+    if not STATE_FILE.exists():
         return set()
-    with path.open("r") as f:
+    with STATE_FILE.open("r") as f:
         return set(json.load(f))
 
 
 def save_state(downloaded_ids: set[str]) -> None:
-    with Path(STATE_FILE).open("w") as f:
+    tmp = STATE_FILE.with_suffix(".tmp")
+    with tmp.open("w") as f:
         json.dump(sorted(downloaded_ids), f, indent=2)
+    tmp.replace(STATE_FILE)
 
 
 def download_file(session, cf: CourseFile, cfg: CourseConfig) -> Path:
     path = target_path(cf, cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(path.name + ".part")
 
-    resp = session.get(cf.url, stream=True)
+    resp = session.get(cf.url, stream=True, timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
 
-    with path.open("wb") as f:
+    with tmp_path.open("wb") as f:
         for chunk in resp.iter_content(chunk_size=8192):
             f.write(chunk)
 
+    tmp_path.replace(path)
     return path
 
 
