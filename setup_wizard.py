@@ -1,4 +1,3 @@
-from getpass import getpass
 import subprocess
 import sys
 from pathlib import Path
@@ -21,7 +20,7 @@ def prompt(question: str, default: str = "") -> str:
 
 def prompt_password(question: str, has_existing: bool) -> str:
     suffix = " (leave blank to keep current)" if has_existing else ""
-    return getpass(f"{question}{suffix}: ").strip()
+    return input(f"{question}{suffix}: ").strip()
 
 
 def prompt_yes_no(question: str, default: bool = True) -> bool:
