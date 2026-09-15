@@ -1,8 +1,14 @@
+import subprocess
+import sys
 from pathlib import Path
-from auth import get_session
-from scraper import get_courses
-from course_config import load_mapping, save_mapping, CourseConfig
-from config import GIU_USERNAME, GIU_PASSWORD, BASE_URL, DOWNLOAD_ROOT
+
+from course_config import load_mapping, save_mapping, read_env, write_env, CourseConfig
+
+
+def prompt(question: str, default: str = "") -> str:
+    suffix = f" [{default}]" if default else ""
+    answer = input(f"{question}{suffix}: ").strip()
+    return answer or default
 
 
 def prompt_yes_no(question: str, default: bool = True) -> bool:
@@ -13,16 +19,37 @@ def prompt_yes_no(question: str, default: bool = True) -> bool:
     return answer.startswith("y")
 
 
-def configure_course(course, existing: CourseConfig | None) -> CourseConfig:
+def configure_credentials() -> dict[str, str]:
+    print("=== GIU CMS Login ===\n")
+    env = read_env()
+
+    username = prompt("GIU username", env.get("USERNAME", ""))
+    password = prompt("GIU password", env.get("PASSWORD", ""))
+
+    default_root = env.get("DOWNLOAD_ROOT", "")
+    print("\nWhere should your university folder live?")
+    print("(Leave blank to use Downloads/GIU)")
+    download_root = prompt("Folder", default_root)
+
+    new_env = {
+        "USERNAME": username,
+        "PASSWORD": password,
+        "DOWNLOAD_ROOT": download_root,
+    }
+    write_env(new_env)
+    print("\nSaved to .env\n")
+    return new_env
+
+
+def configure_course(course, existing: CourseConfig | None, download_root: str) -> CourseConfig:
     print(f"\n--- {course.code} - {course.name} ---")
 
     default_name = existing.display_name if existing else course.name
-    name = input(f"Folder name for this course [{default_name}]: ").strip()
-    display_name = name or default_name
+    display_name = prompt("Folder name for this course", default_name)
 
-    default_folder = existing.folder if existing else str(DOWNLOAD_ROOT / display_name)
-    folder = input(f"Full folder path [{default_folder}]: ").strip()
-    folder = folder or default_folder
+    root = download_root or str(Path.home() / "Downloads" / "GIU")
+    default_folder = existing.folder if existing else str(Path(root) / display_name)
+    folder = prompt("Full folder path", default_folder)
 
     default_flat = existing.flat if existing else False
     flat = not prompt_yes_no(
@@ -33,22 +60,65 @@ def configure_course(course, existing: CourseConfig | None) -> CourseConfig:
     return CourseConfig(display_name=display_name, folder=folder, flat=flat)
 
 
-def main():
-    session = get_session(GIU_USERNAME, GIU_PASSWORD)
-    print("Fetching your courses...")
+def configure_courses(env: dict[str, str]):
+    # import here, after .env is written, so auth/config pick up fresh values
+    from auth import get_session
+    from scraper import get_courses
+    from config import BASE_URL
+
+    print("\n=== Course Setup ===")
+    print("Logging in and fetching your courses...")
+    session = get_session(env["USERNAME"], env["PASSWORD"])
     courses = get_courses(session, BASE_URL)
 
     mapping = load_mapping()
-
     print(f"\nFound {len(courses)} courses. Configure each one below.")
     print("Press Enter on any question to accept the default shown in [brackets].\n")
 
     for course in courses:
         existing = mapping.get(course.code)
-        mapping[course.code] = configure_course(course, existing)
+        mapping[course.code] = configure_course(course, existing, env.get("DOWNLOAD_ROOT", ""))
 
     save_mapping(mapping)
-    print(f"\nSaved configuration for {len(mapping)} courses to course_mapping.json.")
+    print(f"\nSaved configuration for {len(mapping)} courses.")
+
+
+def install_scheduled_task():
+    print("\n=== Automatic Scheduling ===")
+    if not prompt_yes_no("Set this up to run automatically every hour?", default=True):
+        print("Skipped. You can run this wizard again anytime to enable it.")
+        return
+
+    script_dir = Path(__file__).resolve().parent
+    python_exe = script_dir / ".venv" / "Scripts" / "python.exe"
+    main_py = script_dir / "main.py"
+
+    result = subprocess.run([
+        "schtasks", "/Create", "/TN", "GIU CMS Downloader",
+        "/TR", f'"{python_exe}" "{main_py}"',
+        "/SC", "HOURLY",
+        "/RL", "LIMITED",
+        "/F",
+    ], capture_output=True, text=True)
+
+    if result.returncode == 0:
+        print("Scheduled! This will now run automatically every hour.")
+    else:
+        print("Could not set up automatic scheduling. Details:")
+        print(result.stderr)
+
+
+def main():
+    print("GIU CMS Downloader — Setup Wizard\n")
+    env = configure_credentials()
+    configure_courses(env)
+
+    if sys.platform == "win32":
+        install_scheduled_task()
+    else:
+        print("\nAutomatic scheduling isn't set up by this wizard on non-Windows systems.")
+
+    print("\nAll done! Run 'run-now.bat' anytime to check for new files manually.")
 
 
 if __name__ == "__main__":
