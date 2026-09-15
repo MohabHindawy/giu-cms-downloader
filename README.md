@@ -25,7 +25,7 @@ If you chose automatic scheduling, the downloader now runs quietly in the backgr
 
 ## Checking it manually
 
-Run `giu-downloader.exe` anytime to check for new files immediately, without waiting for the next scheduled run. A window will open showing its progress and close when finished.
+Run `giu-cms-downloader.exe` anytime to check for new files immediately, without waiting for the next scheduled run. A window will open showing its progress and close when finished.
 
 ## Changing anything later
 
