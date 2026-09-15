@@ -29,7 +29,7 @@ Run `giu-downloader.exe` anytime to check for new files immediately, without wai
 
 ## Changing anything later
 
-RUn `setup-wizard.exe` again, for any of these:
+Run `setup-wizard.exe` again, for any of these:
 
 - **Your password expires every 3 months**, just run the wizard, and when it asks for your password, type the new one.
 - Adding/renaming a course folder, changing where a course saves to, or switching between flat and sorted-by-type folders.
