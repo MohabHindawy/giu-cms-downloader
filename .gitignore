@@ -430,3 +430,6 @@ FodyWeavers.xsd
 
 # State
 state.json
+
+# Downloads
+downloads/
