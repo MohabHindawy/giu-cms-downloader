@@ -53,7 +53,7 @@ def configure_credentials() -> dict[str, str]:
 
     default_root = env.get("DOWNLOAD_ROOT", "")
 
-    print("\nWhere should your university folder live?")
+    print("\nWhere should your root downloads folder go?")
     print("(Leave blank to use Downloads/GIU)")
 
     download_root = prompt(
