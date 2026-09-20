@@ -1,8 +1,8 @@
 import re
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from models import Course, CourseFile
-from config import REQUEST_TIMEOUT
+from core.models import Course, CourseFile
+from core.config import REQUEST_TIMEOUT
 
 COURSE_LIST_URL = "/apps/student/HomePageStn.aspx"
 COURSE_ROW_RE = re.compile(r"\(\|(?P<code>[^|]+)\|\)\s*(?P<name>.+?)\s*\(\d+\)\s*$")
@@ -60,3 +60,50 @@ def get_courses(session, base_url: str, latest_season_only: bool = True) -> list
         courses = [c for c in courses if _season_key(c.season) == latest]
 
     return courses
+
+
+def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]:
+    url = urljoin(base_url, f"/apps/student/CourseViewStn.aspx?id={course.id}&sid={course.season_id}")
+    resp = session.get(url, timeout=REQUEST_TIMEOUT)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "lxml")
+
+    files = []
+    for week_div in soup.select("div.card.mb-5.weeksdata"):
+        header = week_div.select_one("h2.text-big")
+        week_label = header.get_text(strip=True).removeprefix("Week:").strip() if header else "Unknown Week"
+
+        for card in week_div.select("div.card.mb-4"):
+            strong = card.find("strong")
+            if not strong:
+                continue
+
+            number, _, title = strong.get_text(strip=True).partition(" - ")
+            number, title = number.strip(), title.strip()
+
+            content_div = card.select_one("div[id^='content']")
+            item_type = ""
+            if content_div:
+                full_text = content_div.get_text(" ", strip=True)
+                if "(" in full_text:
+                    item_type = full_text.rsplit("(", 1)[-1].rstrip(")").strip()
+
+            link = card.select_one("a#download")
+            if not link or not link.get("href"):
+                continue
+
+            file_url = urljoin(base_url, link["href"])
+            content_id = link.get("data-contentid")
+            if not content_id:
+                content_id = f"url:{file_url}"
+
+            files.append(CourseFile(
+                course=course,
+                week_label=week_label,
+                number=number,
+                title=title,
+                item_type=item_type,
+                content_id=content_id,
+                url=file_url,
+            ))
+    return files
