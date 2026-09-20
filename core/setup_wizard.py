@@ -2,7 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from course_config import (
+from core.course_config import (
     load_mapping,
     save_mapping,
     read_env,
@@ -128,9 +128,9 @@ def configure_course(
 
 
 def configure_courses(env: dict[str, str]):
-    from auth import get_session
-    from scraper import get_courses
-    from config import BASE_URL
+    from core.auth import get_session
+    from core.scraper import get_courses
+    from core.config import BASE_URL
 
     print("\n=== Course Setup ===")
     print("Logging in and fetching your courses...")

@@ -1,8 +1,8 @@
-from auth import get_session
-from scraper import get_courses, get_course_files
-from downloader import download_all
-from course_config import load_mapping
-from config import GIU_USERNAME, GIU_PASSWORD, BASE_URL
+from core.auth import get_session
+from core.scraper import get_courses, get_course_files
+from core.downloader import download_all
+from core.course_config import load_mapping
+from core.config import GIU_USERNAME, GIU_PASSWORD, BASE_URL
 
 
 def main():

@@ -1,8 +1,8 @@
 import re
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from models import Course, CourseFile
-from config import REQUEST_TIMEOUT
+from core.models import Course, CourseFile
+from core.config import REQUEST_TIMEOUT
 
 COURSE_LIST_URL = "/apps/student/HomePageStn.aspx"
 COURSE_ROW_RE = re.compile(r"\(\|(?P<code>[^|]+)\|\)\s*(?P<name>.+?)\s*\(\d+\)\s*$")

@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
-from models import CourseFile
-from course_config import CourseConfig
-from organizer import target_path
+from core.models import CourseFile
+from core.course_config import CourseConfig
+from core.organizer import target_path
 from paths import get_app_dir
-from config import REQUEST_TIMEOUT
+from core.config import REQUEST_TIMEOUT
 
 STATE_FILE = get_app_dir() / "state.json"
 

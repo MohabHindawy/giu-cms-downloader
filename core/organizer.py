@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from models import CourseFile
-from course_config import CourseConfig
+from core.models import CourseFile
+from core.course_config import CourseConfig
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = {
