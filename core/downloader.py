@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
-from core.models import CourseFile
-from core.course_config import CourseConfig
-from core.organizer import target_path
+from models import CourseFile
+from course_config import CourseConfig
+from organizer import target_path
+from blocking import load_rules, is_blocked
 from paths import get_app_dir
-from core.config import REQUEST_TIMEOUT
+from config import REQUEST_TIMEOUT
 
 STATE_FILE = get_app_dir() / "state.json"
 
@@ -21,6 +22,13 @@ def save_state(downloaded_ids: set[str]) -> None:
     with tmp.open("w") as f:
         json.dump(sorted(downloaded_ids), f, indent=2)
     tmp.replace(STATE_FILE)
+
+
+def mark_all_as_seen(files: list[CourseFile]) -> None:
+    ids = load_state()
+    for cf in files:
+        ids.add(cf.content_id)
+    save_state(ids)
 
 
 def download_file(session, cf: CourseFile, cfg: CourseConfig) -> Path:
@@ -41,6 +49,7 @@ def download_file(session, cf: CourseFile, cfg: CourseConfig) -> Path:
 
 def download_all(session, files: list[CourseFile], mapping: dict[str, CourseConfig]) -> None:
     downloaded_ids = load_state()
+    rules = load_rules()
 
     for cf in files:
         if cf.content_id in downloaded_ids:
@@ -51,6 +60,12 @@ def download_all(session, files: list[CourseFile], mapping: dict[str, CourseConf
         if cfg is None:
             print(f"Skipping (not configured): {cf.course.code} - {cf.title}")
             continue
+
+        if rules:
+            reason = is_blocked(session, cf, rules, REQUEST_TIMEOUT)
+            if reason:
+                print(f"Blocked ({reason}): {cf.title}")
+                continue
 
         print(f"Downloading: {cf.title} ...")
         try:
