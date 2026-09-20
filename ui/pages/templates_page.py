@@ -30,6 +30,8 @@ class GroupCard(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=10, pady=(10, 4))
 
+        ctk.CTkLabel(header, text="Folder name:").pack(side="left", padx=(0, 4))
+
         self.name_entry = ctk.CTkEntry(header, width=180)
         self.name_entry.insert(0, group_name)
         self.name_entry.pack(side="left")
@@ -41,6 +43,11 @@ class GroupCard(ctk.CTkFrame):
         )
         delete_btn.pack(side="right")
 
+        ctk.CTkLabel(
+            self, text="CMS item types that go into this folder:",
+            text_color=("gray40", "gray60"),
+        ).pack(anchor="w", padx=10, pady=(0, 4))
+
         self.tags_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.tags_frame.pack(fill="x", padx=10, pady=(0, 6))
 
@@ -50,8 +57,9 @@ class GroupCard(ctk.CTkFrame):
         add_frame = ctk.CTkFrame(self, fg_color="transparent")
         add_frame.pack(fill="x", padx=10, pady=(0, 10))
 
-        self.new_type_entry = ctk.CTkEntry(add_frame, width=180, placeholder_text="New item type...")
+        self.new_type_entry = ctk.CTkEntry(add_frame, width=180, placeholder_text="e.g. Lecture slides")
         self.new_type_entry.pack(side="left")
+        self.new_type_entry.bind("<Return>", lambda e: self._add_item_type())
 
         add_btn = ctk.CTkButton(add_frame, text="Add", width=50, command=self._add_item_type)
         add_btn.pack(side="left", padx=(6, 0))
@@ -88,21 +96,32 @@ class TemplatesPage(ctk.CTkFrame):
         self.templates = load_templates()
         self.group_cards: list[GroupCard] = []
 
-        top_bar = ctk.CTkFrame(self, fg_color="transparent")
-        top_bar.pack(fill="x", padx=10, pady=(10, 6))
+        info_frame = ctk.CTkFrame(self, fg_color="transparent")
+        info_frame.pack(fill="x", padx=10, pady=(10, 2))
 
-        ctk.CTkLabel(top_bar, text="Template:").pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(
+            info_frame, text="Folder Structure",
+            font=ctk.CTkFont(size=16, weight="bold"),
+        ).pack(anchor="w")
 
-        template_names = list(self.templates.keys())
-        self.template_menu = ctk.CTkOptionMenu(
-            top_bar, values=template_names,
-            command=self._on_template_selected,
-        )
-        self.template_menu.set(template_names[0] if template_names else DEFAULT_TEMPLATE_NAME)
-        self.template_menu.pack(side="left")
+        ctk.CTkLabel(
+            info_frame,
+            text=(
+                "Each group below becomes a subfolder inside your course folders.\n"
+                "The CMS item types listed under each group are the files that get\n"
+                "sorted into that subfolder. Anything not matched goes into \"Other\"."
+            ),
+            text_color=("gray40", "gray60"),
+            justify="left",
+        ).pack(anchor="w", pady=(2, 0))
 
         self.scroll_frame = ctk.CTkScrollableFrame(self)
-        self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=(0, 6))
+        self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=(6, 6))
+
+        template = self.templates.get(DEFAULT_TEMPLATE_NAME)
+        if template:
+            for group_name, item_types in template.groups.items():
+                self._add_group_card(group_name, item_types)
 
         bottom_bar = ctk.CTkFrame(self, fg_color="transparent")
         bottom_bar.pack(fill="x", padx=10, pady=(0, 10))
@@ -112,23 +131,6 @@ class TemplatesPage(ctk.CTkFrame):
 
         save_btn = ctk.CTkButton(bottom_bar, text="Save Changes", command=self._save)
         save_btn.pack(side="right")
-
-        self._load_template(self.template_menu.get())
-
-    def _on_template_selected(self, name: str):
-        self._load_template(name)
-
-    def _load_template(self, name: str):
-        for card in self.group_cards:
-            card.destroy()
-        self.group_cards.clear()
-
-        template = self.templates.get(name)
-        if template is None:
-            return
-
-        for group_name, item_types in template.groups.items():
-            self._add_group_card(group_name, item_types)
 
     def _add_group_card(self, group_name: str, item_types: list[str]):
         card = GroupCard(self.scroll_frame, group_name, item_types, on_delete_group=self._delete_group)
@@ -143,15 +145,18 @@ class TemplatesPage(ctk.CTkFrame):
         card.destroy()
 
     def _save(self):
-        current_name = self.template_menu.get()
-
         groups = {}
         for card in self.group_cards:
             name, types = card.get_data()
             if name in groups:
-                messagebox.showwarning("Duplicate Group", f"Group \"{name}\" appears more than once. Rename one before saving.")
+                messagebox.showwarning(
+                    "Duplicate Group",
+                    f"Group \"{name}\" appears more than once. Rename one before saving.",
+                )
                 return
             groups[name] = types
 
-        self.templates[current_name] = StructureTemplate(name=current_name, groups=groups)
+        self.templates[DEFAULT_TEMPLATE_NAME] = StructureTemplate(
+            name=DEFAULT_TEMPLATE_NAME, groups=groups,
+        )
         save_templates(self.templates)

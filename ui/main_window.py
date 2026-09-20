@@ -4,6 +4,30 @@ import customtkinter as ctk
 from paths import get_app_dir
 from ui.worker import DownloadWorker
 
+import sys
+
+_old_mouse_wheel_all = ctk.CTkScrollableFrame._mouse_wheel_all
+def _patched_mouse_wheel_all(self, event):
+    if self._check_if_valid_scroll(event.widget):
+        if sys.platform.startswith("linux") and getattr(event, "num", 0) not in (4, 5) and getattr(event, "delta", 0) != 0:
+            direction = -1 if event.delta > 0 else 1
+            if self._shift_pressed:
+                if self._parent_canvas.xview() != (0.0, 1.0):
+                    self._parent_canvas.xview_scroll(direction, "units")
+            else:
+                if self._parent_canvas.yview() != (0.0, 1.0):
+                    self._parent_canvas.yview_scroll(direction, "units")
+            return
+    _old_mouse_wheel_all(self, event)
+ctk.CTkScrollableFrame._mouse_wheel_all = _patched_mouse_wheel_all
+
+_old_init = ctk.CTkScrollableFrame.__init__
+def _patched_init(self, *args, **kwargs):
+    _old_init(self, *args, **kwargs)
+    if sys.platform.startswith("linux"):
+        self.bind_all("<MouseWheel>", self._mouse_wheel_all, add="+")
+ctk.CTkScrollableFrame.__init__ = _patched_init
+
 customtkinter = ctk
 
 ctk.set_appearance_mode("system")
@@ -39,20 +63,28 @@ class MainWindow(ctk.CTk):
 
     def build_main_layout(self):
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
         self.sidebar = ctk.CTkFrame(self, width=140)
         self.sidebar.grid(row=0, column=0, sticky="ns")
 
-        self.content = ctk.CTkFrame(self)
+        self.sidebar_sep = ctk.CTkFrame(self, width=2, fg_color=("gray85", "gray16"))
+        self.sidebar_sep.grid(row=0, column=0, sticky="nse", padx=(0, 0))
+
+        self.content = ctk.CTkFrame(self, fg_color="transparent")
         self.content.grid(row=0, column=1, sticky="nsew")
 
-        self.run_bar = ctk.CTkFrame(self, height=70)
-        self.run_bar.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.run_bar_sep = ctk.CTkFrame(self, height=2, fg_color=("gray85", "gray16"))
+        self.run_bar_sep.grid(row=1, column=0, columnspan=2, sticky="ew")
+
+        self.run_bar = ctk.CTkFrame(self, height=70, fg_color="transparent")
+        self.run_bar.grid(row=2, column=0, columnspan=2, sticky="ew")
         self._build_run_bar()
 
         for name in ("Courses", "Templates", "Blocking"):
-            btn = ctk.CTkButton(self.sidebar, text=name, command=lambda n=name: self.show_page(n))
+            btn = ctk.CTkButton(self.sidebar, text=name, command=lambda n=name: self.show_page(n), fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
             btn.pack(fill="x", padx=10, pady=5)
 
         self.show_page("Courses")
@@ -64,9 +96,10 @@ class MainWindow(ctk.CTk):
         self.status_label = ctk.CTkLabel(self.run_bar, text="Idle", anchor="w")
         self.status_label.grid(row=0, column=1, sticky="w", padx=10)
 
-        self.progress_bar = ctk.CTkProgressBar(self.run_bar, width=300)
+        self.progress_bar = ctk.CTkProgressBar(self.run_bar, width=300, mode="determinate")
         self.progress_bar.set(0)
         self.progress_bar.grid(row=1, column=1, sticky="w", padx=10)
+        self.progress_bar.grid_remove()
 
         self.size_label = ctk.CTkLabel(self.run_bar, text="")
         self.size_label.grid(row=1, column=2, sticky="w", padx=10)
@@ -116,6 +149,7 @@ class MainWindow(ctk.CTk):
         elif kind == "file_start":
             title, done, total = message[1], message[2], message[3]
             self.status_label.configure(text=f"Downloading: {title} ({done}/{total})")
+            self.progress_bar.grid()
             self.progress_bar.set(0)
             self.size_label.configure(text="")
 
@@ -134,9 +168,11 @@ class MainWindow(ctk.CTk):
 
         elif kind == "run_complete":
             self.status_label.configure(text="Done")
-            self.progress_bar.set(0)
+            self.progress_bar.grid_remove()
+            self.size_label.configure(text="")
             self.run_button.configure(state="normal")
 
         elif kind == "fatal_error":
             self.status_label.configure(text=f"Error: {message[1]}")
+            self.progress_bar.grid_remove()
             self.run_button.configure(state="normal")

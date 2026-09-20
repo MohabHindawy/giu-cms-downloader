@@ -1,4 +1,5 @@
 import json
+import re
 from dataclasses import dataclass, asdict
 from paths import get_app_dir
 from core.models import CourseFile
@@ -42,7 +43,8 @@ def get_file_size_mb(session, url: str, timeout: int) -> float | None:
 def is_blocked(session, cf: CourseFile, rules: list[BlockingRule], timeout: int) -> str | None:
     for rule in rules:
         if rule.type == "name_contains":
-            if rule.value.lower() in cf.title.lower():
+            pattern = r"\b" + re.escape(rule.value) + r"\b"
+            if re.search(pattern, cf.title, re.IGNORECASE):
                 return f"title contains '{rule.value}'"
 
         elif rule.type == "size_over_mb":

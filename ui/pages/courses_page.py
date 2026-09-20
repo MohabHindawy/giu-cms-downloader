@@ -83,6 +83,24 @@ class CoursesPage(ctk.CTkFrame):
         template_names = list(templates.keys())
         download_root = env.get("DOWNLOAD_ROOT", "")
 
+        info_frame = ctk.CTkFrame(self, fg_color="transparent")
+        info_frame.pack(fill="x", padx=10, pady=(10, 2))
+
+        ctk.CTkLabel(
+            info_frame, text="Course Configuration",
+            font=ctk.CTkFont(size=16, weight="bold"),
+        ).pack(anchor="w")
+
+        ctk.CTkLabel(
+            info_frame,
+            text=(
+                "Configure how each course is saved. Choose a folder location, and select\n"
+                "a structure template to automatically organize downloads into subfolders."
+            ),
+            text_color=("gray40", "gray60"),
+            justify="left",
+        ).pack(anchor="w", pady=(2, 0))
+
         self.scroll_frame = ctk.CTkScrollableFrame(self)
         self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=(10, 0))
 
@@ -92,8 +110,11 @@ class CoursesPage(ctk.CTkFrame):
             row.pack(fill="x", pady=6, padx=4)
             self.rows.append(row)
 
-        save_btn = ctk.CTkButton(self, text="Save Changes", command=self.save_all)
-        save_btn.pack(pady=10)
+        bottom_bar = ctk.CTkFrame(self, fg_color="transparent")
+        bottom_bar.pack(fill="x", padx=10, pady=(0, 10))
+
+        save_btn = ctk.CTkButton(bottom_bar, text="Save Changes", command=self.save_all)
+        save_btn.pack(side="right")
 
     def save_all(self):
         mapping = load_mapping()

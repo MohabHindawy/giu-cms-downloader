@@ -26,6 +26,24 @@ class BlockingPage(ctk.CTkFrame):
 
         self.name_tags: list[NameTag] = []
 
+        info_frame = ctk.CTkFrame(self, fg_color="transparent")
+        info_frame.pack(fill="x", padx=10, pady=(10, 2))
+
+        ctk.CTkLabel(
+            info_frame, text="Download Filters",
+            font=ctk.CTkFont(size=16, weight="bold"),
+        ).pack(anchor="w")
+
+        ctk.CTkLabel(
+            info_frame,
+            text=(
+                "Set rules to prevent certain files from downloading automatically.\n"
+                "You can skip large files, or ignore files that match specific keywords."
+            ),
+            text_color=("gray40", "gray60"),
+            justify="left",
+        ).pack(anchor="w", pady=(2, 0))
+
         rules = load_rules()
         size_rule = None
         name_values = []
