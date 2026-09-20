@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, asdict
 from paths import get_app_dir
-from models import CourseFile
+from core.models import CourseFile
 
 RULES_FILE = get_app_dir() / "blocking_rules.json"
 

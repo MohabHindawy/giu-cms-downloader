@@ -6,6 +6,7 @@ class Course:
     name: str
     id: str
     season_id: str
+    season: str   # e.g. "Winter 2026"
 
 @dataclass
 class CourseFile:
