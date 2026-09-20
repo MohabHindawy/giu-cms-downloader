@@ -109,7 +109,7 @@ def configure_course(
     )
 
     default_flat = (
-        existing.flat
+        existing.template_name == "Flat"
         if existing
         else False
     )
@@ -123,7 +123,7 @@ def configure_course(
     return CourseConfig(
         display_name=display_name,
         folder=folder,
-        flat=flat,
+        template_name="Flat" if flat else "Default",
     )
 
 

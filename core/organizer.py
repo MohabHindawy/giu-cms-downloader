@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 from core.models import CourseFile
 from core.course_config import CourseConfig
+from core.templates import load_templates
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = {
@@ -29,8 +30,14 @@ def get_extension(url: str) -> str:
 
 def target_path(cf: CourseFile, cfg: CourseConfig) -> Path:
     base = Path(cfg.folder)
-    if not cfg.flat:
-        base = base / sanitize(cf.item_type or "Other")
+    if cfg.template_name != "Flat":
+        templates = load_templates()
+        template = templates.get(cfg.template_name)
+        if template:
+            folder = sanitize(template.folder_for(cf.item_type))
+        else:
+            folder = sanitize(cf.item_type or "Other")
+        base = base / folder
 
     ext = get_extension(cf.url)
     name = f"{sanitize(cf.title)}{ext}"

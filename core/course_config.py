@@ -10,7 +10,7 @@ MAPPING_FILE = get_app_dir() / "course_mapping.json"
 class CourseConfig:
     display_name: str
     folder: str
-    flat: bool
+    template_name: str
 
 
 def load_mapping() -> dict[str, CourseConfig]:
@@ -18,7 +18,14 @@ def load_mapping() -> dict[str, CourseConfig]:
         return {}
     with MAPPING_FILE.open("r") as f:
         raw = json.load(f)
-    return {code: CourseConfig(**data) for code, data in raw.items()}
+    mapping = {}
+    for code, data in raw.items():
+        if "flat" in data:
+            flat = data.pop("flat")
+            if "template_name" not in data:
+                data["template_name"] = "Flat" if flat else "Default"
+        mapping[code] = CourseConfig(**data)
+    return mapping
 
 
 def save_mapping(mapping: dict[str, CourseConfig]) -> None:
