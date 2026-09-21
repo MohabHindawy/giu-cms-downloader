@@ -89,7 +89,7 @@ class GroupCard(ctk.CTkFrame):
         return name, types
 
 
-class TemplatesPage(ctk.CTkFrame):
+class StructurePage(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
 
