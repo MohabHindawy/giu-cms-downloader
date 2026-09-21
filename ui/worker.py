@@ -4,8 +4,8 @@ import queue
 from core.auth import get_session
 from core.scraper import get_courses, get_course_files
 from core.downloader import download_all
-from core.course_config import load_mapping
-from core.config import GIU_USERNAME, GIU_PASSWORD, BASE_URL
+from core.course_config import load_mapping, read_env
+from core.config import BASE_URL
 
 
 class DownloadWorker(threading.Thread):
@@ -15,8 +15,9 @@ class DownloadWorker(threading.Thread):
 
     def run(self):
         try:
+            env = read_env()
             mapping = load_mapping()
-            session = get_session(GIU_USERNAME, GIU_PASSWORD)
+            session = get_session(env["GIU_USERNAME"], env["GIU_PASSWORD"])
 
             self.queue.put(("status", "Fetching course list..."))
             courses = get_courses(session, BASE_URL)
