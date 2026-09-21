@@ -6,6 +6,7 @@ class Course:
     name: str
     id: str
     season_id: str
+    season: str
 
 @dataclass
 class CourseFile:

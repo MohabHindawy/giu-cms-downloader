@@ -1,14 +1,26 @@
 import re
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from models import Course, CourseFile
-from config import REQUEST_TIMEOUT
+from core.models import Course, CourseFile
+from core.config import REQUEST_TIMEOUT
 
 COURSE_LIST_URL = "/apps/student/HomePageStn.aspx"
 COURSE_ROW_RE = re.compile(r"\(\|(?P<code>[^|]+)\|\)\s*(?P<name>.+?)\s*\(\d+\)\s*$")
+SEASON_RE = re.compile(r"(?P<season>\w+)\s+(?P<year>\d{4})")
+
+SEASON_ORDER = {"Spring": 0, "Summer": 1, "Winter": 2}
 
 
-def get_courses(session, base_url: str) -> list[Course]:
+def _season_key(season_str: str) -> tuple[int, int]:
+    m = SEASON_RE.match(season_str.strip())
+    if not m:
+        return (0, 0)
+    year = int(m.group("year"))
+    rank = SEASON_ORDER.get(m.group("season"), -1)
+    return (year, rank)
+
+
+def get_courses(session, base_url: str, latest_season_only: bool = True) -> list[Course]:
     resp = session.get(urljoin(base_url, COURSE_LIST_URL), timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
@@ -27,6 +39,7 @@ def get_courses(session, base_url: str) -> list[Course]:
             continue
 
         name_cell = cells[1].get_text(strip=True)
+        season_str = cells[3].get_text(strip=True)
         course_id = cells[4].get_text(strip=True)
         season_id = cells[5].get_text(strip=True)
 
@@ -39,7 +52,13 @@ def get_courses(session, base_url: str) -> list[Course]:
             name=m.group("name").strip(),
             id=course_id,
             season_id=season_id,
+            season=season_str,
         ))
+
+    if latest_season_only and courses:
+        latest = max(_season_key(c.season) for c in courses)
+        courses = [c for c in courses if _season_key(c.season) == latest]
+
     return courses
 
 

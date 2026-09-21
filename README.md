@@ -1,48 +1,60 @@
 # GIU CMS Downloader
 
-Automatically downloads new course files from the GIU CMS and organizes them into folders you choose.
+Automatically downloads new course files from the GIU CMS and keeps them organized the way you want.
 
 ## Setup
 
 ### 1. Download
 
-Go to the [Releases page](https://github.com/MohabHindawy/giu-cms-downloader/releases), download the latest `.zip`, and extract it somewhere permanent, for example `C:\GIU-Downloader`. Don't run it from inside your Downloads folder or a temporary location.
+Go to the [Releases page](https://github.com/MohabHindawy/giu-cms-downloader/releases), download the latest `.zip`, and extract it somewhere permanent.
 
-### 2. Run the setup wizard
+For example:
 
-Run `setup-wizard.exe`.
+```text
+C:\GIU-Downloader\
+```
 
-The wizard will walk you through everything:
+Don't run the app directly from inside the `.zip` or from a temporary folder.
+
+### 2. Run the app
+
+Open:
+
+```text
+giu-cms-downloader.exe
+```
+
+> **Windows may show a SmartScreen warning because the executable is currently unsigned.** If you downloaded it from the official GitHub Releases page, click **More info → Run anyway**.
+
+On the first launch, you'll be asked for:
 
 - Your GIU username and password
-- Where you want your files saved overall
-- For each of your courses: what to name its folder, exactly where that folder should be, and whether files should be sorted into subfolders like "Lectures" and "Assignments" or kept all together
-- Whether to schedule it to check for new files automatically, every hour
+- Where you want your downloaded files stored
+- Whether files already on the CMS should be marked as downloaded, so they aren't downloaded again
 
-### 3. You're done
+After that, the main app will open and you can configure everything else from there.
 
-If you chose automatic scheduling, the downloader now runs quietly in the background every hour, checking each course for new files and saving them where you told it to.
+## Using the app
 
-## Checking it manually
+The sidebar gives you access to the main settings:
 
-Run `giu-cms-downloader.exe` anytime to check for new files immediately, without waiting for the next scheduled run. A window will open showing its progress and close when finished.
+- **Courses** lets you choose where each course is saved and how its folders are organized.
+- **Structure** lets you customize folder structures for things like lectures, assignments, labs, and other files.
+- **Blocking** lets you skip files based on rules such as file type or words in the file name.
+- **Schedule** lets you enable or disable automatic background checks.
+- **Update Login** lets you change your GIU username or password when needed.
 
-## Changing anything later
+You can also use **Run Now** anytime to immediately check the CMS for new files.
 
-Run `setup-wizard.exe` again, for any of these:
-
-- **Your password expires every 3 months**, just run the wizard, and when it asks for your password, type the new one.
-- Adding/renaming a course folder, changing where a course saves to, or switching between flat and sorted-by-type folders.
-- A new semester's courses will show up automatically, the wizard will ask you to configure them the next time you run it.
-
-Every question shows your current setting as the default, press Enter to leave it unchanged, or type something new to update just that one thing. Nothing else needs to be touched or reinstalled.
+The downloader keeps track of what it has already downloaded, so files aren't downloaded again unless needed. New courses will also appear automatically and can be configured from inside the app.
 
 ## Troubleshooting
 
-- **Nothing downloads / login errors** — double check your username and password by logging into the CMS website directly in your browser with the same credentials.
-- **Files aren't going where expected**, run `setup-wizard.exe` again and check the folder path shown for that course.
-- **Want to stop automatic checks**, open **Task Scheduler** (search for it in the Start menu), find **"GIU CMS Downloader"** in the list, right-click, and select **Disable** or **Delete**.
+- **Nothing downloads or you get login errors:** make sure the same username and password work on the GIU CMS website. If your password changed, use **Update Login**.
+- **Files are going to the wrong place:** open **Courses** and check that course's folder and structure.
+- **A file is being skipped:** check your rules under **Blocking**.
+- **Want to stop automatic checks:** disable them from the **Schedule** page.
 
 ## Disclaimer
 
-This is an unofficial and independent tool. It works by reading the same pages your browser already shows you when logged into the CMS.
+This is an unofficial and independent tool. It works by reading the same CMS pages available to you when you're logged in through your browser.

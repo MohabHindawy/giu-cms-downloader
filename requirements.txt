@@ -1,6 +1,5 @@
 requests
 requests-ntlm
 beautifulsoup4
-python-dotenv
 lxml
 customtkinter
