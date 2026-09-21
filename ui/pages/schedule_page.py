@@ -1,7 +1,6 @@
 import sys
 import customtkinter as ctk
 
-from core.scheduling import is_task_installed, install_task, remove_task
 
 class SchedulePage(ctk.CTkFrame):
     def __init__(self, master):
@@ -18,8 +17,8 @@ class SchedulePage(ctk.CTkFrame):
         ctk.CTkLabel(
             info_frame,
             text=(
-                "You can set up Windows Task Scheduler to run the app in the background\n"
-                "every hour. It will silently download new files using your saved configuration."
+                "You can configure the app to launch automatically when your computer starts.\n"
+                "It will sit quietly in your system tray and fetch new files in the background."
             ),
             text_color=("gray40", "gray60"),
             justify="left",
@@ -27,7 +26,7 @@ class SchedulePage(ctk.CTkFrame):
 
         if sys.platform != "win32":
             ctk.CTkLabel(
-                self, text="Automatic scheduling is only supported on Windows.",
+                self, text="Automatic startup is only supported on Windows.",
                 text_color="#e5484d",
             ).pack(pady=40)
             return
@@ -71,13 +70,16 @@ class SchedulePage(ctk.CTkFrame):
         env["SCHEDULE_INTERVAL"] = choice
         write_env(env)
         
-        # If task is already running, re-install it with the new interval
-        if is_task_installed():
-            install_task(choice)
-            self.error_label.configure(text="Schedule updated to " + choice, text_color="#10b981")
+        
+        app = self.winfo_toplevel()
+        if hasattr(app, 'reset_schedule_timer'):
+            app.reset_schedule_timer()
+            
+        self.error_label.configure(text="Schedule updated to " + choice, text_color="#10b981")
 
     def refresh_status(self):
-        installed = is_task_installed()
+        from core.startup import is_in_startup
+        installed = is_in_startup()
         if installed:
             self.status_label.configure(text="Background downloads are currently ENABLED.")
             self.action_btn.configure(text="Disable Automatic Downloads", fg_color="#e5484d", hover_color="#c13639")
@@ -86,13 +88,20 @@ class SchedulePage(ctk.CTkFrame):
             self.action_btn.configure(text="Enable Automatic Downloads", fg_color=["#3a7ebf", "#1f538d"], hover_color=["#325882", "#14375e"])
             
     def toggle_task(self):
+        from core.startup import is_in_startup, add_to_startup, remove_from_startup
         self.error_label.configure(text="", text_color="#e5484d")
-        installed = is_task_installed()
+        installed = is_in_startup()
         if installed:
-            err = remove_task()
+            err = remove_from_startup()
         else:
-            err = install_task(self.interval_var.get())
+            err = add_to_startup()
             
         if err:
             self.error_label.configure(text=err)
+            
+        
+        app = self.winfo_toplevel()
+        if hasattr(app, 'reset_schedule_timer'):
+            app.reset_schedule_timer()
+            
         self.refresh_status()

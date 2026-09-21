@@ -29,12 +29,12 @@ def _patched_init(self, *args, **kwargs):
 ctk.CTkScrollableFrame.__init__ = _patched_init
 
 
-ctk.set_appearance_mode("system")
+ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 
 class MainWindow(ctk.CTk):
-    def __init__(self):
+    def __init__(self, start_in_tray=False):
         super().__init__()
         self.title("GIU CMS Downloader")
         self.geometry("800x500")
@@ -43,13 +43,100 @@ class MainWindow(ctk.CTk):
         self.worker = None
 
         self.cached_courses = None
-
+        
+        self.protocol("WM_DELETE_WINDOW", self.hide_to_tray)
+        self.tray_icon = None
+        
         env_path = get_app_dir() / ".env"
+        self.start_tray_icon()
+        self.schedule_timer_id = None
+        self.reset_schedule_timer()
+
+
 
         if env_path.exists():
             self.build_main_layout()
         else:
             self.build_login_only()
+
+        if start_in_tray:
+            self.withdraw()
+
+    def start_tray_icon(self):
+        import threading
+        import pystray
+        from PIL import Image
+        from pystray import MenuItem as item
+        from paths import get_app_dir
+        
+        icon_path = get_app_dir() / "assets" / "icon.png"
+        image = Image.open(icon_path) if icon_path.exists() else Image.new('RGB', (64, 64), color='gray')
+
+        menu = pystray.Menu(
+            item("Open", self.show_from_tray, default=True),
+            item("Run Now", self.run_now_from_tray),
+            pystray.Menu.SEPARATOR,
+            item("Exit", self.exit_app),
+        )
+
+        self.tray_icon = pystray.Icon("giu-cms-downloader", image, "GIU CMS Downloader", menu)
+        threading.Thread(target=self.tray_icon.run, daemon=True).start()
+
+    def hide_to_tray(self):
+        self.withdraw()
+
+    def show_from_tray(self, icon=None, item=None):
+        self.after(0, self._show_window)
+
+    def _show_window(self):
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+
+    def run_now_from_tray(self, icon=None, item=None):
+        self.after(0, self.start_run_if_idle)
+
+    def exit_app(self, icon=None, item=None):
+        if self.tray_icon:
+            self.tray_icon.stop()
+        self.after(0, self.destroy)
+
+    def start_run_if_idle(self):
+        if not self.worker or not self.worker.is_alive():
+            if hasattr(self, 'run_button') and self.run_button.winfo_exists():
+                self.start_run()
+            else:
+                
+                pass
+
+    def reset_schedule_timer(self):
+        if self.schedule_timer_id is not None:
+            self.after_cancel(self.schedule_timer_id)
+            self.schedule_timer_id = None
+            
+        from core.startup import is_in_startup
+        if not is_in_startup():
+            return
+            
+        from core.course_config import read_env
+        env = read_env()
+        interval_str = env.get("SCHEDULE_INTERVAL", "1 Hour")
+        
+        
+        minutes = 60
+        if interval_str == "30 Minutes": minutes = 30
+        elif interval_str == "1 Hour": minutes = 60
+        elif interval_str == "2 Hours": minutes = 120
+        elif interval_str == "4 Hours": minutes = 240
+        elif interval_str == "12 Hours": minutes = 720
+        elif interval_str == "Daily": minutes = 1440
+        
+        ms = minutes * 60 * 1000
+        self.schedule_timer_id = self.after(ms, self._on_schedule_tick)
+        
+    def _on_schedule_tick(self):
+        self.start_run_if_idle()
+        self.reset_schedule_timer()
 
     def build_login_only(self):
         from ui.pages.login_page import LoginPage

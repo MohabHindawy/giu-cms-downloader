@@ -35,8 +35,13 @@ class LoginPage(ctk.CTkFrame):
         self.password_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
         
         self.show_password = False
+        from PIL import Image
+        from paths import get_app_dir
+        self.eye_img = ctk.CTkImage(Image.open(get_app_dir() / "assets" / "eye.png"), size=(18, 18))
+        self.eye_off_img = ctk.CTkImage(Image.open(get_app_dir() / "assets" / "eye-off.png"), size=(18, 18))
+        
         self.eye_button = ctk.CTkButton(
-            pw_frame, text="👁", width=36, command=self.toggle_password,
+            pw_frame, text="", image=self.eye_img, width=36, command=self.toggle_password, fg_color="transparent", hover_color=("gray80", "gray26")
         )
         self.eye_button.pack(side="right")
 
@@ -73,7 +78,7 @@ class LoginPage(ctk.CTkFrame):
     def toggle_password(self):
         self.show_password = not self.show_password
         self.password_entry.configure(show="" if self.show_password else "•")
-        self.eye_button.configure(text="🙈" if self.show_password else "👁")
+        self.eye_button.configure(image=self.eye_off_img if self.show_password else self.eye_img)
 
     def browse_folder(self):
         from tkinter import filedialog
