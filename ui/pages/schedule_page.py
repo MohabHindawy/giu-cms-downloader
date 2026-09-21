@@ -40,6 +40,22 @@ class SchedulePage(ctk.CTkFrame):
             font=ctk.CTkFont(size=14),
         )
         self.status_label.pack(pady=(20, 10))
+        
+        interval_frame = ctk.CTkFrame(self.status_card, fg_color="transparent")
+        interval_frame.pack(pady=(0, 20))
+        
+        ctk.CTkLabel(interval_frame, text="Run every:").pack(side="left", padx=(0, 10))
+        
+        from core.course_config import read_env
+        env = read_env()
+        saved_interval = env.get("SCHEDULE_INTERVAL", "1 Hour")
+        
+        self.intervals = ["30 Minutes", "1 Hour", "2 Hours", "4 Hours", "12 Hours", "Daily"]
+        self.interval_var = ctk.StringVar(value=saved_interval if saved_interval in self.intervals else "1 Hour")
+        self.interval_menu = ctk.CTkOptionMenu(
+            interval_frame, values=self.intervals, variable=self.interval_var, command=self.on_interval_change
+        )
+        self.interval_menu.pack(side="left")
 
         self.action_btn = ctk.CTkButton(self.status_card, text="", command=self.toggle_task, width=200)
         self.action_btn.pack(pady=(0, 20))
@@ -49,6 +65,17 @@ class SchedulePage(ctk.CTkFrame):
 
         self.refresh_status()
 
+    def on_interval_change(self, choice: str):
+        from core.course_config import read_env, write_env
+        env = read_env()
+        env["SCHEDULE_INTERVAL"] = choice
+        write_env(env)
+        
+        # If task is already running, re-install it with the new interval
+        if is_task_installed():
+            install_task(choice)
+            self.error_label.configure(text="Schedule updated to " + choice, text_color="#10b981")
+
     def refresh_status(self):
         installed = is_task_installed()
         if installed:
@@ -57,15 +84,14 @@ class SchedulePage(ctk.CTkFrame):
         else:
             self.status_label.configure(text="Background downloads are currently DISABLED.")
             self.action_btn.configure(text="Enable Automatic Downloads", fg_color=["#3a7ebf", "#1f538d"], hover_color=["#325882", "#14375e"])
-        self.error_label.configure(text="")
-
+            
     def toggle_task(self):
-        self.error_label.configure(text="")
+        self.error_label.configure(text="", text_color="#e5484d")
         installed = is_task_installed()
         if installed:
             err = remove_task()
         else:
-            err = install_task()
+            err = install_task(self.interval_var.get())
             
         if err:
             self.error_label.configure(text=err)

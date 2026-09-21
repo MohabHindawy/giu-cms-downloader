@@ -30,11 +30,28 @@ def is_task_installed() -> bool:
     except Exception:
         return False
 
-def install_task() -> str | None:
+def install_task(interval: str = "1 Hour") -> str | None:
     if sys.platform != "win32":
         return "Scheduling is only supported on Windows."
         
     cmd = get_command()
+    
+    # Translate UI string to schtasks arguments
+    if interval == "30 Minutes":
+        sc, mo = "MINUTE", "30"
+    elif interval == "1 Hour":
+        sc, mo = "HOURLY", "1"
+    elif interval == "2 Hours":
+        sc, mo = "HOURLY", "2"
+    elif interval == "4 Hours":
+        sc, mo = "HOURLY", "4"
+    elif interval == "12 Hours":
+        sc, mo = "HOURLY", "12"
+    elif interval == "Daily":
+        sc, mo = "DAILY", "1"
+    else:
+        sc, mo = "HOURLY", "1"
+
     try:
         result = subprocess.run(
             [
@@ -45,7 +62,9 @@ def install_task() -> str | None:
                 "/TR",
                 cmd,
                 "/SC",
-                "HOURLY",
+                sc,
+                "/MO",
+                mo,
                 "/RL",
                 "LIMITED",
                 "/F",
