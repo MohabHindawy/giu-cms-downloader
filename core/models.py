@@ -11,8 +11,6 @@ class Course:
 @dataclass
 class CourseFile:
     course: Course
-    week_label: str
-    number: str
     title: str
     item_type: str
     content_id: str

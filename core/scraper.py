@@ -70,16 +70,12 @@ def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]
 
     files = []
     for week_div in soup.select("div.card.mb-5.weeksdata"):
-        header = week_div.select_one("h2.text-big")
-        week_label = header.get_text(strip=True).removeprefix("Week:").strip() if header else "Unknown Week"
-
         for card in week_div.select("div.card.mb-4"):
             strong = card.find("strong")
             if not strong:
                 continue
 
-            number, _, title = strong.get_text(strip=True).partition(" - ")
-            number, title = number.strip(), title.strip()
+            title = strong.get_text(strip=True).partition(" - ")[-1].strip()
 
             content_div = card.select_one("div[id^='content']")
             item_type = ""
@@ -99,8 +95,6 @@ def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]
 
             files.append(CourseFile(
                 course=course,
-                week_label=week_label,
-                number=number,
                 title=title,
                 item_type=item_type,
                 content_id=content_id,

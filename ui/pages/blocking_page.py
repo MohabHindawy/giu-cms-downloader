@@ -83,8 +83,13 @@ class BlockingPage(ctk.CTkScrollableFrame):
         self.size_entry.pack(side="left", padx=6)
         self.size_entry.bind("<FocusOut>", lambda e: self._save())
         self.size_entry.bind("<Return>", lambda e: self._save())
+        
+        if self.size_enabled.get():
+            self.size_entry.configure(state="normal", text_color=("gray10", "gray90"))
+        else:
+            self.size_entry.configure(state="disabled", text_color="gray50")
 
-        self._on_size_toggle()
+
 
         ctk.CTkLabel(size_body, text="MB").pack(side="left")
 

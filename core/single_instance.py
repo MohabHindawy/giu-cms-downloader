@@ -23,22 +23,18 @@ def listen_for_instances(server, app):
         except Exception:
             break
 
-def setup_single_instance(app):
+def check_and_bind():
     """
     Attempts to bind to the local port.
-    If it fails, assumes another instance is running, sends SHOW, and exits.
-    If it succeeds, starts a background thread to listen for SHOW commands.
+    If it fails, assumes another instance is running, sends SHOW, and exits immediately.
+    Returns the server socket if successful.
     """
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         server.bind(("127.0.0.1", PORT))
         server.listen(5)
-        # Start listening in the background
-        threading.Thread(target=listen_for_instances, args=(server, app), daemon=True).start()
-        # Keep a reference to the server so it doesn't get garbage collected
-        app._single_instance_server = server
+        return server
     except OSError:
-        # Address already in use, send SHOW to existing instance
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(("127.0.0.1", PORT))
@@ -47,3 +43,8 @@ def setup_single_instance(app):
         except Exception:
             pass
         sys.exit(0)
+
+def start_listener(server, app):
+    """Starts listening on the bound server socket."""
+    threading.Thread(target=listen_for_instances, args=(server, app), daemon=True).start()
+    app._single_instance_server = server

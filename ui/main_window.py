@@ -1,7 +1,7 @@
 import queue
 import customtkinter as ctk
 
-from paths import get_app_dir
+from paths import get_app_dir, get_resource_dir
 from ui.worker import DownloadWorker
 
 import sys
@@ -56,6 +56,10 @@ class MainWindow(ctk.CTk):
 
         if env_path.exists():
             self.build_main_layout()
+            
+            from core.course_config import read_env
+            if read_env().get("IGNORE_OLD_FILES") == "1":
+                self.after(1000, self.start_run_if_idle)
         else:
             self.build_login_only()
 
@@ -67,9 +71,9 @@ class MainWindow(ctk.CTk):
         import pystray
         from PIL import Image
         from pystray import MenuItem as item
-        from paths import get_app_dir
+        from paths import get_resource_dir
         
-        icon_path = get_app_dir() / "assets" / "icon.png"
+        icon_path = get_resource_dir() / "assets" / "icon.png"
         image = Image.open(icon_path) if icon_path.exists() else Image.new('RGB', (64, 64), color='gray')
 
         menu = pystray.Menu(
@@ -105,9 +109,6 @@ class MainWindow(ctk.CTk):
         if not self.worker or not self.worker.is_alive():
             if hasattr(self, 'run_button') and self.run_button.winfo_exists():
                 self.start_run()
-            else:
-                
-                pass
 
     def reset_schedule_timer(self):
         if self.schedule_timer_id is not None:
@@ -240,7 +241,6 @@ class MainWindow(ctk.CTk):
             self.login_btn.configure(state="disabled")
         self.status_label.configure(text="Starting...")
         
-        from ui.worker import DownloadWorker
         self.worker = DownloadWorker(self.update_queue)
         self.worker.start()
         

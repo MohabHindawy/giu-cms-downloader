@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 from core.course_config import read_env, write_env
-from paths import get_app_dir
+from paths import get_app_dir, get_resource_dir
 
 
 class LoginPage(ctk.CTkFrame):
@@ -36,9 +36,9 @@ class LoginPage(ctk.CTkFrame):
         
         self.show_password = False
         from PIL import Image
-        from paths import get_app_dir
-        self.eye_img = ctk.CTkImage(Image.open(get_app_dir() / "assets" / "eye.png"), size=(18, 18))
-        self.eye_off_img = ctk.CTkImage(Image.open(get_app_dir() / "assets" / "eye-off.png"), size=(18, 18))
+        from paths import get_resource_dir
+        self.eye_img = ctk.CTkImage(Image.open(get_resource_dir() / "assets" / "eye.png"), size=(18, 18))
+        self.eye_off_img = ctk.CTkImage(Image.open(get_resource_dir() / "assets" / "eye-off.png"), size=(18, 18))
         
         self.eye_button = ctk.CTkButton(
             pw_frame, text="", image=self.eye_img, width=36, command=self.toggle_password, fg_color="transparent", hover_color=("gray80", "gray26")
