@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from core.blocking import load_rules, save_rules, BlockingRule
+from core.blocking import BlockingRule, load_rules, save_rules
 
 
 class NameTag(ctk.CTkFrame):
@@ -12,8 +12,12 @@ class NameTag(ctk.CTkFrame):
         label.pack(side="left", padx=(8, 4), pady=4)
 
         remove_btn = ctk.CTkButton(
-            self, text="×", width=20, height=20,
-            font=ctk.CTkFont(size=14), fg_color="transparent",
+            self,
+            text="×",
+            width=20,
+            height=20,
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
             hover_color=("gray70", "gray40"),
             command=lambda: on_remove(self),
         )
@@ -30,7 +34,8 @@ class BlockingPage(ctk.CTkScrollableFrame):
         info_frame.pack(fill="x", padx=10, pady=(10, 2))
 
         ctk.CTkLabel(
-            info_frame, text="Download Filters",
+            info_frame,
+            text="Download Filters",
             font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(anchor="w")
 
@@ -53,20 +58,24 @@ class BlockingPage(ctk.CTkScrollableFrame):
             elif r.type == "name_contains":
                 name_values.append(r.value)
 
-
-        size_section = ctk.CTkFrame(self, fg_color=("gray90", "gray20"), corner_radius=8)
+        size_section = ctk.CTkFrame(
+            self, fg_color=("gray90", "gray20"), corner_radius=8
+        )
         size_section.pack(fill="x", padx=10, pady=(10, 6))
 
         size_header = ctk.CTkFrame(size_section, fg_color="transparent")
         size_header.pack(fill="x", padx=10, pady=(10, 6))
 
         ctk.CTkLabel(
-            size_header, text="Skip large files",
+            size_header,
+            text="Skip large files",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(side="left")
 
         self.size_enabled = ctk.CTkSwitch(
-            size_header, text="Enable", width=50,
+            size_header,
+            text="Enable",
+            width=50,
             command=self._on_size_toggle,
         )
         self.size_enabled.pack(side="right")
@@ -84,24 +93,30 @@ class BlockingPage(ctk.CTkScrollableFrame):
         self.size_entry.bind("<FocusOut>", lambda e: self._save())
         self.size_entry.bind("<Return>", lambda e: self._save())
 
-        self._on_size_toggle()
+        if self.size_enabled.get():
+            self.size_entry.configure(state="normal", text_color=("gray10", "gray90"))
+        else:
+            self.size_entry.configure(state="disabled", text_color="gray50")
 
         ctk.CTkLabel(size_body, text="MB").pack(side="left")
 
-
-        name_section = ctk.CTkFrame(self, fg_color=("gray90", "gray20"), corner_radius=8)
+        name_section = ctk.CTkFrame(
+            self, fg_color=("gray90", "gray20"), corner_radius=8
+        )
         name_section.pack(fill="x", padx=10, pady=(6, 10))
 
         name_header = ctk.CTkFrame(name_section, fg_color="transparent")
         name_header.pack(fill="x", padx=10, pady=(10, 6))
 
         ctk.CTkLabel(
-            name_header, text="Skip files by name",
+            name_header,
+            text="Skip files by name",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(side="left", anchor="w")
 
         ctk.CTkLabel(
-            name_section, text="Files whose title contains any of these will be skipped",
+            name_section,
+            text="Files whose title contains any of these will be skipped",
             text_color=("gray40", "gray60"),
             justify="left",
         ).pack(anchor="w", padx=10, pady=(0, 6))
@@ -115,7 +130,9 @@ class BlockingPage(ctk.CTkScrollableFrame):
         add_frame = ctk.CTkFrame(name_section, fg_color="transparent")
         add_frame.pack(fill="x", padx=10, pady=(0, 10))
 
-        self.name_entry = ctk.CTkEntry(add_frame, width=200, placeholder_text="e.g. exam, recording...")
+        self.name_entry = ctk.CTkEntry(
+            add_frame, width=200, placeholder_text="e.g. exam, recording..."
+        )
         self.name_entry.pack(side="left")
         self.name_entry.bind("<Return>", lambda e: self._add_name())
 

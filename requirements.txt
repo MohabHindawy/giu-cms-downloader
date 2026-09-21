@@ -3,3 +3,5 @@ requests-ntlm
 beautifulsoup4
 lxml
 customtkinter
+pystray
+pillow

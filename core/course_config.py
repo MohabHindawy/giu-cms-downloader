@@ -1,5 +1,6 @@
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+
 from paths import get_app_dir
 
 ENV_FILE = get_app_dir() / ".env"
@@ -24,10 +25,10 @@ def load_mapping() -> dict[str, CourseConfig]:
             flat = data.pop("flat")
             if "template_name" not in data:
                 data["template_name"] = "Flat" if flat else "Structured"
-        
+
         if data.get("template_name") == "Default":
             data["template_name"] = "Structured"
-            
+
         mapping[code] = CourseConfig(**data)
     return mapping
 
