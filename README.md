@@ -16,8 +16,6 @@ C:\GIU-Downloader\
 
 Don't run the app directly from inside the `.zip` or from a temporary folder.
 
-> **Windows may show a SmartScreen warning because the executable is currently unsigned.** If you downloaded it from the official GitHub Releases page, click **More info → Run anyway**.
-
 ### 2. Run the app
 
 Open:
@@ -25,6 +23,8 @@ Open:
 ```text
 giu-cms-downloader.exe
 ```
+
+> **Windows may show a SmartScreen warning because the executable is currently unsigned.** If you downloaded it from the official GitHub Releases page, click **More info → Run anyway**.
 
 On the first launch, you'll be asked for:
 
