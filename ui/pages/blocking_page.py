@@ -20,7 +20,7 @@ class NameTag(ctk.CTkFrame):
         remove_btn.pack(side="left", padx=(0, 4), pady=4)
 
 
-class BlockingPage(ctk.CTkFrame):
+class BlockingPage(ctk.CTkScrollableFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
 
@@ -67,8 +67,8 @@ class BlockingPage(ctk.CTkFrame):
         ).pack(side="left")
 
         self.size_enabled = ctk.CTkSwitch(
-            size_header, text="", width=40,
-            command=self._save,
+            size_header, text="Enable", width=50,
+            command=self._on_size_toggle,
         )
         self.size_enabled.pack(side="right")
         if size_rule is not None:
@@ -84,6 +84,8 @@ class BlockingPage(ctk.CTkFrame):
         self.size_entry.pack(side="left", padx=6)
         self.size_entry.bind("<FocusOut>", lambda e: self._save())
         self.size_entry.bind("<Return>", lambda e: self._save())
+
+        self._on_size_toggle()
 
         ctk.CTkLabel(size_body, text="MB").pack(side="left")
 
@@ -105,7 +107,7 @@ class BlockingPage(ctk.CTkFrame):
             text_color=("gray40", "gray60"),
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
-        self.tags_frame = ctk.CTkFrame(name_section, fg_color="transparent")
+        self.tags_frame = ctk.CTkFrame(name_section, fg_color="transparent", height=1)
         self.tags_frame.pack(fill="x", padx=10, pady=(0, 6))
 
         for v in name_values:
@@ -120,6 +122,13 @@ class BlockingPage(ctk.CTkFrame):
 
         add_btn = ctk.CTkButton(add_frame, text="Add", width=50, command=self._add_name)
         add_btn.pack(side="left", padx=(6, 0))
+
+    def _on_size_toggle(self):
+        if self.size_enabled.get():
+            self.size_entry.configure(state="normal", text_color=("gray10", "gray90"))
+        else:
+            self.size_entry.configure(state="disabled", text_color="gray50")
+        self._save()
 
     def _add_tag(self, text: str):
         tag = NameTag(self.tags_frame, text, on_remove=self._remove_tag)

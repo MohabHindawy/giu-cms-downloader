@@ -69,15 +69,21 @@ class CoursesPage(ctk.CTkFrame):
 
     def load_courses(self):
         env = read_env()
-        try:
-            session = get_session(env["GIU_USERNAME"], env["GIU_PASSWORD"])
-            courses = get_courses(session, BASE_URL)
-        except Exception as e:
-            self.status_label.configure(text=f"Couldn't load courses: {e}\n\nDid your password change?")
-            
-            retry_btn = ctk.CTkButton(self, text="Update Login", command=lambda: self.winfo_toplevel().open_login())
-            retry_btn.pack(pady=10)
-            return
+        master = self.winfo_toplevel()
+        
+        courses = getattr(master, "cached_courses", None)
+        if courses is not None:
+            master.cached_courses = None
+        else:
+            try:
+                session = get_session(env["GIU_USERNAME"], env["GIU_PASSWORD"])
+                courses = get_courses(session, BASE_URL)
+            except Exception as e:
+                self.status_label.configure(text=f"Couldn't load courses: {e}\n\nDid your password change?")
+                
+                retry_btn = ctk.CTkButton(self, text="Update Login", command=lambda: self.winfo_toplevel().open_login())
+                retry_btn.pack(pady=10)
+                return
 
         self.status_label.destroy()
 
@@ -87,7 +93,10 @@ class CoursesPage(ctk.CTkFrame):
         if "Flat" not in template_names:
             template_names.append("Flat")
         
-        download_root = env.get("DOWNLOAD_ROOT", "")
+        from pathlib import Path
+        download_root = env.get("DOWNLOAD_ROOT", "").strip()
+        if not download_root:
+            download_root = str(Path.home() / "Downloads" / "GIU")
 
         info_frame = ctk.CTkFrame(self, fg_color="transparent")
         info_frame.pack(fill="x", padx=10, pady=(10, 2))
@@ -101,7 +110,9 @@ class CoursesPage(ctk.CTkFrame):
             info_frame,
             text=(
                 "Configure how each course is saved. Choose a folder location, and select\n"
-                "a structure template to automatically organize downloads into subfolders."
+                "a structure template to automatically organize downloads into subfolders.\n"
+                "Select 'Flat' to have all files in one folder, select Structured to have\n"
+                "files sorted into the subfolders style designed in the Structure page."
             ),
             text_color=("gray40", "gray60"),
             justify="left",

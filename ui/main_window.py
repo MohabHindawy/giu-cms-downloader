@@ -43,21 +43,22 @@ class MainWindow(ctk.CTk):
         self.update_queue = queue.Queue()
         self.worker = None
 
-        env_path = get_app_dir() / ".env"
-        mapping_path = get_app_dir() / "course_mapping.json"
+        self.cached_courses = None
 
-        if env_path.exists() and mapping_path.exists():
+        env_path = get_app_dir() / ".env"
+
+        if env_path.exists():
             self.build_main_layout()
         else:
             self.build_login_only()
-
 
     def build_login_only(self):
         from ui.pages.login_page import LoginPage
         self.login_frame = LoginPage(self, on_success=self._on_setup_complete)
         self.login_frame.pack(fill="both", expand=True)
 
-    def _on_setup_complete(self):
+    def _on_setup_complete(self, courses=None):
+        self.cached_courses = courses
         self.login_frame.destroy()
         self.build_main_layout()
 

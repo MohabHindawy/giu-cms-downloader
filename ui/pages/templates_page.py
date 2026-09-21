@@ -48,7 +48,7 @@ class GroupCard(ctk.CTkFrame):
             text_color=("gray40", "gray60"),
         ).pack(anchor="w", padx=10, pady=(0, 4))
 
-        self.tags_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.tags_frame = ctk.CTkFrame(self, fg_color="transparent", height=1)
         self.tags_frame.pack(fill="x", padx=10, pady=(0, 6))
 
         for t in item_types:
@@ -138,7 +138,15 @@ class TemplatesPage(ctk.CTkFrame):
         self.group_cards.append(card)
 
     def _add_group(self):
-        self._add_group_card("New Group", [])
+        base_name = "New Group"
+        name = base_name
+        existing_names = [card.name_entry.get().strip() for card in self.group_cards]
+        counter = 1
+        while name in existing_names:
+            counter += 1
+            name = f"{base_name} {counter}"
+            
+        self._add_group_card(name, [])
 
     def _delete_group(self, card: GroupCard):
         self.group_cards.remove(card)

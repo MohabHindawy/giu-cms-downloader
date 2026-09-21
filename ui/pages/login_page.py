@@ -90,7 +90,7 @@ class LoginPage(ctk.CTkFrame):
 
         try:
             session = get_session(username, password)
-            get_courses(session, BASE_URL)
+            courses = get_courses(session, BASE_URL)
         except Exception as e:
             self.error_label.configure(text=f"Login failed: {e}")
             self.continue_button.configure(state="normal", text="Continue")
@@ -102,4 +102,4 @@ class LoginPage(ctk.CTkFrame):
             "DOWNLOAD_ROOT": download_root,
         })
 
-        self.on_success()
+        self.on_success(courses)
