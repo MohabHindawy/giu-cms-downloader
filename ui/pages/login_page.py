@@ -24,13 +24,14 @@ class LoginPage(ctk.CTkFrame):
         self.username_entry.insert(0, env.get("GIU_USERNAME", ""))
         self.username_entry.pack(fill="x", pady=(0, 12))
 
-        ctk.CTkLabel(container, text="Password").pack(anchor="w", pady=(0, 4))
+        has_password = bool(env.get("GIU_PASSWORD", ""))
+        pw_label_text = "Password (leave blank to keep current)" if has_password else "Password"
+        ctk.CTkLabel(container, text=pw_label_text).pack(anchor="w", pady=(0, 4))
         
         pw_frame = ctk.CTkFrame(container, fg_color="transparent")
         pw_frame.pack(fill="x", pady=(0, 12))
         
         self.password_entry = ctk.CTkEntry(pw_frame, show="•")
-        self.password_entry.insert(0, env.get("GIU_PASSWORD", ""))
         self.password_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
         
         self.show_password = False
@@ -51,7 +52,6 @@ class LoginPage(ctk.CTkFrame):
         browse_btn = ctk.CTkButton(folder_frame, text="Browse...", width=74, command=self.browse_folder)
         browse_btn.pack(side="right")
 
-        from paths import get_app_dir
         if not (get_app_dir() / "state.json").exists():
             self.ignore_old_var = ctk.StringVar(value="0")
             self.ignore_old_checkbox = ctk.CTkCheckBox(
@@ -83,8 +83,13 @@ class LoginPage(ctk.CTkFrame):
             self.folder_entry.insert(0, path)
 
     def submit(self):
+        env = read_env()
         username = self.username_entry.get().strip()
+        
         password = self.password_entry.get().strip()
+        if not password and env.get("GIU_PASSWORD"):
+            password = env.get("GIU_PASSWORD")
+            
         download_root = self.folder_entry.get().strip()
 
         if not username or not password:

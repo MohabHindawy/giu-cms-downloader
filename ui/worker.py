@@ -3,8 +3,8 @@ import queue
 
 from core.auth import get_session
 from core.scraper import get_courses, get_course_files
-from core.downloader import download_all
-from core.course_config import load_mapping, read_env
+from core.downloader import download_all, mark_all_as_seen
+from core.course_config import load_mapping, read_env, write_env
 from core.config import BASE_URL
 
 
@@ -33,12 +33,11 @@ class DownloadWorker(threading.Thread):
 
             if env.get("IGNORE_OLD_FILES") == "1":
                 self.queue.put(("status", "Marking existing files as seen..."))
-                from core.downloader import mark_all_as_seen
                 mark_all_as_seen(all_files)
                 env["IGNORE_OLD_FILES"] = "0"
-                from core.course_config import write_env
                 write_env(env)
-                self.queue.put(("done", 0))
+                self.queue.put(("status", "Existing CMS files marked as already downloaded"))
+                self.queue.put(("run_complete",))
                 return
 
             total = len(all_files)

@@ -24,14 +24,19 @@ class CourseRow(ctk.CTkFrame):
         default_template = existing.template_name if existing else DEFAULT_TEMPLATE_NAME
 
         ctk.CTkLabel(self, text="Folder name").grid(row=1, column=0, sticky="w", padx=10)
-        self.name_entry = ctk.CTkEntry(self, width=200)
-        self.name_entry.insert(0, default_name)
+        self.download_root = download_root
+        self.manual_folder_edited = existing is not None
+        
+        self.name_var = ctk.StringVar(value=default_name)
+        self.name_entry = ctk.CTkEntry(self, width=200, textvariable=self.name_var)
         self.name_entry.grid(row=1, column=1, sticky="w", padx=10, pady=4)
+        self.name_var.trace_add("write", self._on_name_change)
 
         ctk.CTkLabel(self, text="Save to").grid(row=2, column=0, sticky="w", padx=10)
-        self.folder_entry = ctk.CTkEntry(self, width=280)
-        self.folder_entry.insert(0, default_folder)
+        self.folder_var = ctk.StringVar(value=default_folder)
+        self.folder_entry = ctk.CTkEntry(self, width=280, textvariable=self.folder_var)
         self.folder_entry.grid(row=2, column=1, sticky="w", padx=10, pady=4)
+        self.folder_entry.bind("<Key>", self._on_manual_folder_edit)
 
         browse_btn = ctk.CTkButton(self, text="...", width=30, command=self.browse)
         browse_btn.grid(row=2, column=2, sticky="w", padx=(0, 10))
@@ -41,11 +46,19 @@ class CourseRow(ctk.CTkFrame):
         self.template_menu.set(default_template)
         self.template_menu.grid(row=3, column=1, sticky="w", padx=10, pady=(0, 10))
 
+    def _on_manual_folder_edit(self, event):
+        self.manual_folder_edited = True
+
+    def _on_name_change(self, *args):
+        if not self.manual_folder_edited:
+            new_name = self.name_var.get().strip()
+            self.folder_var.set(f"{self.download_root}/{new_name}")
+
     def browse(self):
         path = filedialog.askdirectory()
         if path:
-            self.folder_entry.delete(0, "end")
-            self.folder_entry.insert(0, path)
+            self.folder_var.set(path)
+            self.manual_folder_edited = True
 
     def to_config(self) -> CourseConfig:
         return CourseConfig(
@@ -136,5 +149,15 @@ class CoursesPage(ctk.CTkFrame):
     def save_all(self):
         mapping = load_mapping()
         for row in self.rows:
-            mapping[row.course.code] = row.to_config()
+            cfg = row.to_config()
+            if not cfg.folder:
+                from tkinter import messagebox
+                messagebox.showerror(
+                    "Invalid Folder",
+                    f"The destination folder for {row.course.name} cannot be blank.\n\nPlease choose a valid path before saving."
+                )
+                return
+            mapping[row.course.code] = cfg
         save_mapping(mapping)
+        from tkinter import messagebox
+        messagebox.showinfo("Saved", "Course configuration saved successfully!")

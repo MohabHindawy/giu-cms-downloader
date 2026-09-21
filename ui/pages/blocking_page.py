@@ -53,7 +53,6 @@ class BlockingPage(ctk.CTkScrollableFrame):
             elif r.type == "name_contains":
                 name_values.append(r.value)
 
-        # --- Size limit section ---
 
         size_section = ctk.CTkFrame(self, fg_color=("gray90", "gray20"), corner_radius=8)
         size_section.pack(fill="x", padx=10, pady=(10, 6))
@@ -89,7 +88,6 @@ class BlockingPage(ctk.CTkScrollableFrame):
 
         ctk.CTkLabel(size_body, text="MB").pack(side="left")
 
-        # --- Name filter section ---
 
         name_section = ctk.CTkFrame(self, fg_color=("gray90", "gray20"), corner_radius=8)
         name_section.pack(fill="x", padx=10, pady=(6, 10))
@@ -103,8 +101,9 @@ class BlockingPage(ctk.CTkScrollableFrame):
         ).pack(side="left", anchor="w")
 
         ctk.CTkLabel(
-            name_section, text="Files whose title contains any of these will be skipped:",
+            name_section, text="Files whose title contains any of these will be skipped",
             text_color=("gray40", "gray60"),
+            justify="left",
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
         self.tags_frame = ctk.CTkFrame(name_section, fg_color="transparent", height=1)

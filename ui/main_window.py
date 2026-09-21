@@ -28,7 +28,6 @@ def _patched_init(self, *args, **kwargs):
         self.bind_all("<MouseWheel>", self._mouse_wheel_all, add="+")
 ctk.CTkScrollableFrame.__init__ = _patched_init
 
-customtkinter = ctk
 
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
@@ -91,12 +90,15 @@ class MainWindow(ctk.CTk):
         spacer = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         spacer.pack(fill="y", expand=True)
 
-        login_btn = ctk.CTkButton(self.sidebar, text="Update Login", command=self.open_login, fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
-        login_btn.pack(fill="x", padx=10, pady=10, side="bottom")
+        self.login_btn = ctk.CTkButton(self.sidebar, text="Update Login", command=self.open_login, fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
+        self.login_btn.pack(fill="x", padx=10, pady=10, side="bottom")
 
         self.show_page("Courses")
 
     def open_login(self):
+        if self.worker and self.worker.is_alive():
+            return
+            
         for attr in ['sidebar', 'sidebar_sep', 'content', 'run_bar_sep', 'run_bar']:
             if hasattr(self, attr) and getattr(self, attr):
                 getattr(self, attr).destroy()
@@ -142,9 +144,14 @@ class MainWindow(ctk.CTk):
 
     def start_run(self):
         self.run_button.configure(state="disabled")
+        if hasattr(self, "login_btn"):
+            self.login_btn.configure(state="disabled")
         self.status_label.configure(text="Starting...")
+        
+        from ui.worker import DownloadWorker
         self.worker = DownloadWorker(self.update_queue)
         self.worker.start()
+        
         self.after(100, self.poll_queue)
 
     def poll_queue(self):
@@ -155,7 +162,7 @@ class MainWindow(ctk.CTk):
         except queue.Empty:
             pass
 
-        if self.worker and self.worker.is_alive():
+        if (self.worker and self.worker.is_alive()) or not self.update_queue.empty():
             self.after(100, self.poll_queue)
 
     def _handle_message(self, message):
@@ -164,10 +171,15 @@ class MainWindow(ctk.CTk):
         if kind == "status":
             self.status_label.configure(text=message[1])
 
+        elif kind == "log":
+            self.status_label.configure(text=message[1])
+
         elif kind == "scan_done":
             self.status_label.configure(text=f"Found {message[1]} files")
 
         elif kind == "file_start":
+            self.progress_bar.stop()
+            self.progress_bar.configure(mode="determinate")
             title, done, total = message[1], message[2], message[3]
             self.status_label.configure(text=f"Downloading: {title} ({done}/{total})")
             self.progress_bar.grid()
@@ -182,18 +194,28 @@ class MainWindow(ctk.CTk):
                     text=f"{done_bytes / 1_048_576:.1f} MB / {total_bytes / 1_048_576:.1f} MB"
                 )
             else:
-                self.progress_bar.configure(mode="indeterminate")
+                if self.progress_bar.cget("mode") != "indeterminate":
+                    self.progress_bar.configure(mode="indeterminate")
+                    self.progress_bar.start()
 
         elif kind in ("file_done", "file_skipped", "file_blocked", "file_failed"):
+            self.progress_bar.stop()
+            self.progress_bar.configure(mode="determinate")
             self.progress_bar.set(1)
 
         elif kind == "run_complete":
+            self.progress_bar.stop()
             self.status_label.configure(text="Done")
             self.progress_bar.grid_remove()
             self.size_label.configure(text="")
             self.run_button.configure(state="normal")
+            if hasattr(self, "login_btn"):
+                self.login_btn.configure(state="normal")
 
         elif kind == "fatal_error":
+            self.progress_bar.stop()
             self.status_label.configure(text=f"Error: {message[1]}")
             self.progress_bar.grid_remove()
             self.run_button.configure(state="normal")
+            if hasattr(self, "login_btn"):
+                self.login_btn.configure(state="normal")

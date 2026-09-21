@@ -14,7 +14,10 @@ def main():
         courses = get_courses(session, BASE_URL)
         all_files = []
         for course in courses:
-            all_files.extend(get_course_files(session, BASE_URL, course))
+            try:
+                all_files.extend(get_course_files(session, BASE_URL, course))
+            except Exception as e:
+                print(f"Warning: Failed to fetch files for {course.code} - {e}", file=sys.stderr)
             
         if env.get("IGNORE_OLD_FILES") == "1":
             from core.downloader import mark_all_as_seen
