@@ -83,7 +83,7 @@ class MainWindow(ctk.CTk):
         self.run_bar.grid(row=2, column=0, columnspan=2, sticky="ew")
         self._build_run_bar()
 
-        for name in ("Courses", "Templates", "Blocking"):
+        for name in ("Courses", "Templates", "Blocking", "Schedule"):
             btn = ctk.CTkButton(self.sidebar, text=name, command=lambda n=name: self.show_page(n), fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
             btn.pack(fill="x", padx=10, pady=5)
 
@@ -134,6 +134,9 @@ class MainWindow(ctk.CTk):
         elif name == "Blocking":
             from ui.pages.blocking_page import BlockingPage
             BlockingPage(self.content).pack(fill="both", expand=True)
+        elif name == "Schedule":
+            from ui.pages.schedule_page import SchedulePage
+            SchedulePage(self.content).pack(fill="both", expand=True)
 
 
     def start_run(self):
