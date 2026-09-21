@@ -1,8 +1,9 @@
 import json
 import re
-from dataclasses import dataclass, asdict
-from paths import get_app_dir
+from dataclasses import asdict, dataclass
+
 from core.models import CourseFile
+from paths import get_app_dir
 
 RULES_FILE = get_app_dir() / "blocking_rules.json"
 
@@ -40,7 +41,9 @@ def get_file_size_mb(session, url: str, timeout: int) -> float | None:
         return None
 
 
-def is_blocked(session, cf: CourseFile, rules: list[BlockingRule], timeout: int) -> str | None:
+def is_blocked(
+    session, cf: CourseFile, rules: list[BlockingRule], timeout: int
+) -> str | None:
     for rule in rules:
         if rule.type == "name_contains":
             pattern = r"\b" + re.escape(rule.value) + r"\b"

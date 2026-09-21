@@ -1,8 +1,10 @@
 import re
 from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
-from core.models import Course, CourseFile
+
 from core.config import REQUEST_TIMEOUT
+from core.models import Course, CourseFile
 
 COURSE_LIST_URL = "/apps/student/HomePageStn.aspx"
 COURSE_ROW_RE = re.compile(r"\(\|(?P<code>[^|]+)\|\)\s*(?P<name>.+?)\s*\(\d+\)\s*$")
@@ -20,7 +22,9 @@ def _season_key(season_str: str) -> tuple[int, int]:
     return (year, rank)
 
 
-def get_courses(session, base_url: str, latest_season_only: bool = True) -> list[Course]:
+def get_courses(
+    session, base_url: str, latest_season_only: bool = True
+) -> list[Course]:
     resp = session.get(urljoin(base_url, COURSE_LIST_URL), timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
@@ -47,13 +51,15 @@ def get_courses(session, base_url: str, latest_season_only: bool = True) -> list
         if not m:
             continue
 
-        courses.append(Course(
-            code=m.group("code"),
-            name=m.group("name").strip(),
-            id=course_id,
-            season_id=season_id,
-            season=season_str,
-        ))
+        courses.append(
+            Course(
+                code=m.group("code"),
+                name=m.group("name").strip(),
+                id=course_id,
+                season_id=season_id,
+                season=season_str,
+            )
+        )
 
     if latest_season_only and courses:
         latest = max(_season_key(c.season) for c in courses)
@@ -63,7 +69,10 @@ def get_courses(session, base_url: str, latest_season_only: bool = True) -> list
 
 
 def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]:
-    url = urljoin(base_url, f"/apps/student/CourseViewStn.aspx?id={course.id}&sid={course.season_id}")
+    url = urljoin(
+        base_url,
+        f"/apps/student/CourseViewStn.aspx?id={course.id}&sid={course.season_id}",
+    )
     resp = session.get(url, timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
@@ -93,11 +102,13 @@ def get_course_files(session, base_url: str, course: Course) -> list[CourseFile]
             if not content_id:
                 content_id = f"url:{file_url}"
 
-            files.append(CourseFile(
-                course=course,
-                title=title,
-                item_type=item_type,
-                content_id=content_id,
-                url=file_url,
-            ))
+            files.append(
+                CourseFile(
+                    course=course,
+                    title=title,
+                    item_type=item_type,
+                    content_id=content_id,
+                    url=file_url,
+                )
+            )
     return files

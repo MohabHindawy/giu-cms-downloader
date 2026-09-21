@@ -1,7 +1,13 @@
-import customtkinter as ctk
 from tkinter import messagebox
 
-from core.templates import load_templates, save_templates, StructureTemplate, DEFAULT_TEMPLATE_NAME
+import customtkinter as ctk
+
+from core.templates import (
+    DEFAULT_TEMPLATE_NAME,
+    StructureTemplate,
+    load_templates,
+    save_templates,
+)
 
 
 class ItemTypeTag(ctk.CTkFrame):
@@ -13,8 +19,12 @@ class ItemTypeTag(ctk.CTkFrame):
         label.pack(side="left", padx=(8, 4), pady=4)
 
         remove_btn = ctk.CTkButton(
-            self, text="×", width=20, height=20,
-            font=ctk.CTkFont(size=14), fg_color="transparent",
+            self,
+            text="×",
+            width=20,
+            height=20,
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
             hover_color=("gray70", "gray40"),
             command=lambda: on_remove(self),
         )
@@ -37,14 +47,18 @@ class GroupCard(ctk.CTkFrame):
         self.name_entry.pack(side="left")
 
         delete_btn = ctk.CTkButton(
-            header, text="Delete Group", width=100,
-            fg_color="#e5484d", hover_color="#c13639",
+            header,
+            text="Delete Group",
+            width=100,
+            fg_color="#e5484d",
+            hover_color="#c13639",
             command=lambda: on_delete_group(self),
         )
         delete_btn.pack(side="right")
 
         ctk.CTkLabel(
-            self, text="CMS item types that go into this folder:",
+            self,
+            text="CMS item types that go into this folder:",
             text_color=("gray40", "gray60"),
         ).pack(anchor="w", padx=10, pady=(0, 4))
 
@@ -57,11 +71,15 @@ class GroupCard(ctk.CTkFrame):
         add_frame = ctk.CTkFrame(self, fg_color="transparent")
         add_frame.pack(fill="x", padx=10, pady=(0, 10))
 
-        self.new_type_entry = ctk.CTkEntry(add_frame, width=180, placeholder_text="e.g. Lecture slides")
+        self.new_type_entry = ctk.CTkEntry(
+            add_frame, width=180, placeholder_text="e.g. Lecture slides"
+        )
         self.new_type_entry.pack(side="left")
         self.new_type_entry.bind("<Return>", lambda e: self._add_item_type())
 
-        add_btn = ctk.CTkButton(add_frame, text="Add", width=50, command=self._add_item_type)
+        add_btn = ctk.CTkButton(
+            add_frame, text="Add", width=50, command=self._add_item_type
+        )
         add_btn.pack(side="left", padx=(6, 0))
 
     def _add_tag(self, text: str):
@@ -100,7 +118,8 @@ class StructurePage(ctk.CTkFrame):
         info_frame.pack(fill="x", padx=10, pady=(10, 2))
 
         ctk.CTkLabel(
-            info_frame, text="Folder Structure",
+            info_frame,
+            text="Folder Structure",
             font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(anchor="w")
 
@@ -109,7 +128,7 @@ class StructurePage(ctk.CTkFrame):
             text=(
                 "Each group below becomes a subfolder inside your course folders.\n"
                 "The CMS item types listed under each group are the files that get\n"
-                "sorted into that subfolder. Anything not matched goes into \"Other\"."
+                'sorted into that subfolder. Anything not matched goes into "Other".'
             ),
             text_color=("gray40", "gray60"),
             justify="left",
@@ -126,14 +145,21 @@ class StructurePage(ctk.CTkFrame):
         bottom_bar = ctk.CTkFrame(self, fg_color="transparent")
         bottom_bar.pack(fill="x", padx=10, pady=(0, 10))
 
-        add_group_btn = ctk.CTkButton(bottom_bar, text="Add Group", width=100, command=self._add_group)
+        add_group_btn = ctk.CTkButton(
+            bottom_bar, text="Add Group", width=100, command=self._add_group
+        )
         add_group_btn.pack(side="left")
 
         save_btn = ctk.CTkButton(bottom_bar, text="Save Changes", command=self._save)
         save_btn.pack(side="right")
 
     def _add_group_card(self, group_name: str, item_types: list[str]):
-        card = GroupCard(self.scroll_frame, group_name, item_types, on_delete_group=self._delete_group)
+        card = GroupCard(
+            self.scroll_frame,
+            group_name,
+            item_types,
+            on_delete_group=self._delete_group,
+        )
         card.pack(fill="x", pady=6, padx=4)
         self.group_cards.append(card)
 
@@ -145,7 +171,7 @@ class StructurePage(ctk.CTkFrame):
         while name in existing_names:
             counter += 1
             name = f"{base_name} {counter}"
-            
+
         self._add_group_card(name, [])
 
     def _delete_group(self, card: GroupCard):
@@ -159,12 +185,13 @@ class StructurePage(ctk.CTkFrame):
             if name in groups:
                 messagebox.showwarning(
                     "Duplicate Group",
-                    f"Group \"{name}\" appears more than once. Rename one before saving.",
+                    f'Group "{name}" appears more than once. Rename one before saving.',
                 )
                 return
             groups[name] = types
 
         self.templates[DEFAULT_TEMPLATE_NAME] = StructureTemplate(
-            name=DEFAULT_TEMPLATE_NAME, groups=groups,
+            name=DEFAULT_TEMPLATE_NAME,
+            groups=groups,
         )
         save_templates(self.templates)

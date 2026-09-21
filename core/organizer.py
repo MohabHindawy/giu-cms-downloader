@@ -1,13 +1,17 @@
 import re
 from pathlib import Path
-from urllib.parse import urlparse, unquote
-from core.models import CourseFile
+from urllib.parse import unquote, urlparse
+
 from core.course_config import CourseConfig
+from core.models import CourseFile
 from core.templates import load_templates
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = {
-    "CON", "PRN", "AUX", "NUL",
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
     *(f"COM{i}" for i in range(1, 10)),
     *(f"LPT{i}" for i in range(1, 10)),
 }

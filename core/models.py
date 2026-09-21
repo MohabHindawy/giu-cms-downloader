@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Course:
     code: str
@@ -7,6 +8,7 @@ class Course:
     id: str
     season_id: str
     season: str
+
 
 @dataclass
 class CourseFile:

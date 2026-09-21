@@ -1,5 +1,6 @@
 import json
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
+
 from paths import get_app_dir
 
 TEMPLATES_FILE = get_app_dir() / "templates.json"
@@ -39,18 +40,18 @@ def load_templates() -> dict[str, StructureTemplate]:
 
     with TEMPLATES_FILE.open("r") as f:
         raw = json.load(f)
-        
+
     templates = {}
     for name, data in raw.items():
         if name == "Default":
             name = "Structured"
             data["name"] = name
         templates[name] = StructureTemplate(**data)
-        
+
     if "Structured" not in templates:
         default = _default_template()
         templates[default.name] = default
-        
+
     return templates
 
 

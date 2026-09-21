@@ -1,11 +1,11 @@
-import threading
 import queue
+import threading
 
 from core.auth import get_session
-from core.scraper import get_courses, get_course_files
-from core.downloader import download_all, mark_all_as_seen
-from core.course_config import load_mapping, read_env, write_env
 from core.config import BASE_URL
+from core.course_config import load_mapping, read_env, write_env
+from core.downloader import download_all, mark_all_as_seen
+from core.scraper import get_course_files, get_courses
 
 
 class DownloadWorker(threading.Thread):
@@ -39,9 +39,13 @@ class DownloadWorker(threading.Thread):
                 if not has_errors:
                     env["IGNORE_OLD_FILES"] = "0"
                     write_env(env)
-                    self.queue.put(("status", "Existing CMS files marked as already downloaded"))
+                    self.queue.put(
+                        ("status", "Existing CMS files marked as already downloaded")
+                    )
                 else:
-                    self.queue.put(("status", "Marked files, but kept flag due to errors"))
+                    self.queue.put(
+                        ("status", "Marked files, but kept flag due to errors")
+                    )
                 self.queue.put(("run_complete",))
                 return
 
@@ -53,21 +57,31 @@ class DownloadWorker(threading.Thread):
             def on_event(event, **kwargs):
                 nonlocal completed
                 if event == "start":
-                    self.queue.put(("file_start", kwargs["file"].title, completed, total))
+                    self.queue.put(
+                        ("file_start", kwargs["file"].title, completed, total)
+                    )
                 elif event == "progress":
                     self.queue.put(("file_progress", kwargs["done"], kwargs["total"]))
                 elif event == "done":
                     completed += 1
-                    self.queue.put(("file_done", kwargs["file"].title, completed, total))
+                    self.queue.put(
+                        ("file_done", kwargs["file"].title, completed, total)
+                    )
                 elif event == "skipped":
                     completed += 1
-                    self.queue.put(("file_skipped", kwargs["file"].title, kwargs["reason"]))
+                    self.queue.put(
+                        ("file_skipped", kwargs["file"].title, kwargs["reason"])
+                    )
                 elif event == "blocked":
                     completed += 1
-                    self.queue.put(("file_blocked", kwargs["file"].title, kwargs["reason"]))
+                    self.queue.put(
+                        ("file_blocked", kwargs["file"].title, kwargs["reason"])
+                    )
                 elif event == "failed":
                     completed += 1
-                    self.queue.put(("file_failed", kwargs["file"].title, kwargs["error"]))
+                    self.queue.put(
+                        ("file_failed", kwargs["file"].title, kwargs["error"])
+                    )
 
             download_all(session, all_files, mapping, on_event=on_event)
             self.queue.put(("run_complete", None))

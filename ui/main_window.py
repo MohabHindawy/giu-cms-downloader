@@ -1,15 +1,21 @@
 import queue
+import sys
+
 import customtkinter as ctk
 
 from paths import get_app_dir, get_resource_dir
 from ui.worker import DownloadWorker
 
-import sys
-
 _old_mouse_wheel_all = ctk.CTkScrollableFrame._mouse_wheel_all
+
+
 def _patched_mouse_wheel_all(self, event):
     if self._check_if_valid_scroll(event.widget):
-        if sys.platform.startswith("linux") and getattr(event, "num", 0) not in (4, 5) and getattr(event, "delta", 0) != 0:
+        if (
+            sys.platform.startswith("linux")
+            and getattr(event, "num", 0) not in (4, 5)
+            and getattr(event, "delta", 0) != 0
+        ):
             direction = -1 if event.delta > 0 else 1
             if self._shift_pressed:
                 if self._parent_canvas.xview() != (0.0, 1.0):
@@ -19,13 +25,19 @@ def _patched_mouse_wheel_all(self, event):
                     self._parent_canvas.yview_scroll(direction, "units")
             return
     _old_mouse_wheel_all(self, event)
+
+
 ctk.CTkScrollableFrame._mouse_wheel_all = _patched_mouse_wheel_all
 
 _old_init = ctk.CTkScrollableFrame.__init__
+
+
 def _patched_init(self, *args, **kwargs):
     _old_init(self, *args, **kwargs)
     if sys.platform.startswith("linux"):
         self.bind_all("<MouseWheel>", self._mouse_wheel_all, add="+")
+
+
 ctk.CTkScrollableFrame.__init__ = _patched_init
 
 
@@ -43,21 +55,20 @@ class MainWindow(ctk.CTk):
         self.worker = None
 
         self.cached_courses = None
-        
+
         self.protocol("WM_DELETE_WINDOW", self.hide_to_tray)
         self.tray_icon = None
-        
+
         env_path = get_app_dir() / ".env"
         self.start_tray_icon()
         self.schedule_timer_id = None
         self.reset_schedule_timer()
 
-
-
         if env_path.exists():
             self.build_main_layout()
-            
+
             from core.course_config import read_env
+
             if read_env().get("IGNORE_OLD_FILES") == "1":
                 self.after(1000, self.start_run_if_idle)
         else:
@@ -68,13 +79,19 @@ class MainWindow(ctk.CTk):
 
     def start_tray_icon(self):
         import threading
+
         import pystray
         from PIL import Image
         from pystray import MenuItem as item
+
         from paths import get_resource_dir
-        
+
         icon_path = get_resource_dir() / "assets" / "icon.png"
-        image = Image.open(icon_path) if icon_path.exists() else Image.new('RGB', (64, 64), color='gray')
+        image = (
+            Image.open(icon_path)
+            if icon_path.exists()
+            else Image.new("RGB", (64, 64), color="gray")
+        )
 
         menu = pystray.Menu(
             item("Open", self.show_from_tray, default=True),
@@ -83,7 +100,9 @@ class MainWindow(ctk.CTk):
             item("Exit", self.exit_app),
         )
 
-        self.tray_icon = pystray.Icon("giu-cms-downloader", image, "GIU CMS Downloader", menu)
+        self.tray_icon = pystray.Icon(
+            "giu-cms-downloader", image, "GIU CMS Downloader", menu
+        )
         threading.Thread(target=self.tray_icon.run, daemon=True).start()
 
     def hide_to_tray(self):
@@ -107,40 +126,48 @@ class MainWindow(ctk.CTk):
 
     def start_run_if_idle(self):
         if not self.worker or not self.worker.is_alive():
-            if hasattr(self, 'run_button') and self.run_button.winfo_exists():
+            if hasattr(self, "run_button") and self.run_button.winfo_exists():
                 self.start_run()
 
     def reset_schedule_timer(self):
         if self.schedule_timer_id is not None:
             self.after_cancel(self.schedule_timer_id)
             self.schedule_timer_id = None
-            
+
         from core.startup import is_in_startup
+
         if not is_in_startup():
             return
-            
+
         from core.course_config import read_env
+
         env = read_env()
         interval_str = env.get("SCHEDULE_INTERVAL", "1 Hour")
-        
-        
+
         minutes = 60
-        if interval_str == "30 Minutes": minutes = 30
-        elif interval_str == "1 Hour": minutes = 60
-        elif interval_str == "2 Hours": minutes = 120
-        elif interval_str == "4 Hours": minutes = 240
-        elif interval_str == "12 Hours": minutes = 720
-        elif interval_str == "Daily": minutes = 1440
-        
+        if interval_str == "30 Minutes":
+            minutes = 30
+        elif interval_str == "1 Hour":
+            minutes = 60
+        elif interval_str == "2 Hours":
+            minutes = 120
+        elif interval_str == "4 Hours":
+            minutes = 240
+        elif interval_str == "12 Hours":
+            minutes = 720
+        elif interval_str == "Daily":
+            minutes = 1440
+
         ms = minutes * 60 * 1000
         self.schedule_timer_id = self.after(ms, self._on_schedule_tick)
-        
+
     def _on_schedule_tick(self):
         self.start_run_if_idle()
         self.reset_schedule_timer()
 
     def build_login_only(self):
         from ui.pages.login_page import LoginPage
+
         self.login_frame = LoginPage(self, on_success=self._on_setup_complete)
         self.login_frame.pack(fill="both", expand=True)
 
@@ -148,8 +175,9 @@ class MainWindow(ctk.CTk):
         self.cached_courses = courses
         self.login_frame.destroy()
         self.build_main_layout()
-        
+
         from core.course_config import read_env
+
         env = read_env()
         if env.get("IGNORE_OLD_FILES") == "1":
             self.after(500, self.start_run)
@@ -177,13 +205,29 @@ class MainWindow(ctk.CTk):
         self._build_run_bar()
 
         for name in ("Courses", "Structure", "Blocking", "Schedule"):
-            btn = ctk.CTkButton(self.sidebar, text=name, command=lambda n=name: self.show_page(n), fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
+            btn = ctk.CTkButton(
+                self.sidebar,
+                text=name,
+                command=lambda n=name: self.show_page(n),
+                fg_color="transparent",
+                text_color=("gray10", "gray90"),
+                hover_color=("gray80", "gray26"),
+                anchor="w",
+            )
             btn.pack(fill="x", padx=10, pady=5)
 
         spacer = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         spacer.pack(fill="y", expand=True)
 
-        self.login_btn = ctk.CTkButton(self.sidebar, text="Update Login", command=self.open_login, fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
+        self.login_btn = ctk.CTkButton(
+            self.sidebar,
+            text="Update Login",
+            command=self.open_login,
+            fg_color="transparent",
+            text_color=("gray10", "gray90"),
+            hover_color=("gray80", "gray26"),
+            anchor="w",
+        )
         self.login_btn.pack(fill="x", padx=10, pady=10, side="bottom")
 
         self.show_page("Courses")
@@ -191,11 +235,11 @@ class MainWindow(ctk.CTk):
     def open_login(self):
         if self.worker and self.worker.is_alive():
             return
-            
-        for attr in ['sidebar', 'sidebar_sep', 'content', 'run_bar_sep', 'run_bar']:
+
+        for attr in ["sidebar", "sidebar_sep", "content", "run_bar_sep", "run_bar"]:
             if hasattr(self, attr) and getattr(self, attr):
                 getattr(self, attr).destroy()
-        
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
         self.grid_rowconfigure(2, weight=0)
@@ -203,13 +247,17 @@ class MainWindow(ctk.CTk):
         self.build_login_only()
 
     def _build_run_bar(self):
-        self.run_button = ctk.CTkButton(self.run_bar, text="Run Now", command=self.start_run)
+        self.run_button = ctk.CTkButton(
+            self.run_bar, text="Run Now", command=self.start_run
+        )
         self.run_button.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
 
         self.status_label = ctk.CTkLabel(self.run_bar, text="", anchor="w")
         self.status_label.grid(row=0, column=1, sticky="w", padx=10)
 
-        self.progress_bar = ctk.CTkProgressBar(self.run_bar, width=300, mode="determinate")
+        self.progress_bar = ctk.CTkProgressBar(
+            self.run_bar, width=300, mode="determinate"
+        )
         self.progress_bar.set(0)
         self.progress_bar.grid(row=1, column=1, sticky="w", padx=10)
         self.progress_bar.grid_remove()
@@ -223,27 +271,30 @@ class MainWindow(ctk.CTk):
 
         if name == "Courses":
             from ui.pages.courses_page import CoursesPage
+
             CoursesPage(self.content).pack(fill="both", expand=True)
         elif name == "Structure":
             from ui.pages.structure_page import StructurePage
+
             StructurePage(self.content).pack(fill="both", expand=True)
         elif name == "Blocking":
             from ui.pages.blocking_page import BlockingPage
+
             BlockingPage(self.content).pack(fill="both", expand=True)
         elif name == "Schedule":
             from ui.pages.schedule_page import SchedulePage
-            SchedulePage(self.content).pack(fill="both", expand=True)
 
+            SchedulePage(self.content).pack(fill="both", expand=True)
 
     def start_run(self):
         self.run_button.configure(state="disabled")
         if hasattr(self, "login_btn"):
             self.login_btn.configure(state="disabled")
         self.status_label.configure(text="Starting...")
-        
+
         self.worker = DownloadWorker(self.update_queue)
         self.worker.start()
-        
+
         self.after(100, self.poll_queue)
 
     def poll_queue(self):

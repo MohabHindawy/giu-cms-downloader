@@ -4,6 +4,7 @@ import threading
 
 PORT = 54312
 
+
 def handle_client(conn, app):
     try:
         data = conn.recv(1024)
@@ -15,13 +16,17 @@ def handle_client(conn, app):
     finally:
         conn.close()
 
+
 def listen_for_instances(server, app):
     while True:
         try:
             conn, addr = server.accept()
-            threading.Thread(target=handle_client, args=(conn, app), daemon=True).start()
+            threading.Thread(
+                target=handle_client, args=(conn, app), daemon=True
+            ).start()
         except Exception:
             break
+
 
 def check_and_bind():
     """
@@ -44,7 +49,10 @@ def check_and_bind():
             pass
         sys.exit(0)
 
+
 def start_listener(server, app):
     """Starts listening on the bound server socket."""
-    threading.Thread(target=listen_for_instances, args=(server, app), daemon=True).start()
+    threading.Thread(
+        target=listen_for_instances, args=(server, app), daemon=True
+    ).start()
     app._single_instance_server = server

@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
-from core.models import CourseFile
-from core.course_config import CourseConfig
-from core.organizer import target_path
-from core.blocking import load_rules, is_blocked
-from paths import get_app_dir
+
+from core.blocking import is_blocked, load_rules
 from core.config import REQUEST_TIMEOUT
+from core.course_config import CourseConfig
+from core.models import CourseFile
+from core.organizer import target_path
+from paths import get_app_dir
 
 STATE_FILE = get_app_dir() / "state.json"
 
@@ -54,7 +55,9 @@ def download_file(session, cf: CourseFile, cfg: CourseConfig, on_progress=None) 
     return path
 
 
-def download_all(session, files: list[CourseFile], mapping: dict[str, CourseConfig], on_event=None) -> None:
+def download_all(
+    session, files: list[CourseFile], mapping: dict[str, CourseConfig], on_event=None
+) -> None:
     def emit(event: str, **kwargs):
         if on_event:
             on_event(event, **kwargs)
@@ -85,8 +88,12 @@ def download_all(session, files: list[CourseFile], mapping: dict[str, CourseConf
         emit("start", file=cf)
         try:
             path = download_file(
-                session, cf, cfg,
-                on_progress=lambda done, total, cf=cf: emit("progress", file=cf, done=done, total=total),
+                session,
+                cf,
+                cfg,
+                on_progress=lambda done, total, cf=cf: emit(
+                    "progress", file=cf, done=done, total=total
+                ),
             )
             print(f"  -> saved to {path}")
             emit("done", file=cf, path=path)
