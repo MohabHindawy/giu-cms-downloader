@@ -15,6 +15,15 @@ def main():
         all_files = []
         for course in courses:
             all_files.extend(get_course_files(session, BASE_URL, course))
+            
+        if env.get("IGNORE_OLD_FILES") == "1":
+            from core.downloader import mark_all_as_seen
+            mark_all_as_seen(all_files)
+            env["IGNORE_OLD_FILES"] = "0"
+            from core.course_config import write_env
+            write_env(env)
+            return
+
         download_all(session, all_files, mapping)
         return
 

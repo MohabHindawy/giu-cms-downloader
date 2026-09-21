@@ -31,6 +31,16 @@ class DownloadWorker(threading.Thread):
                 except Exception as e:
                     self.queue.put(("log", f"Couldn't read {course.code}: {e}"))
 
+            if env.get("IGNORE_OLD_FILES") == "1":
+                self.queue.put(("status", "Marking existing files as seen..."))
+                from core.downloader import mark_all_as_seen
+                mark_all_as_seen(all_files)
+                env["IGNORE_OLD_FILES"] = "0"
+                from core.course_config import write_env
+                write_env(env)
+                self.queue.put(("done", 0))
+                return
+
             total = len(all_files)
             self.queue.put(("scan_done", total))
 

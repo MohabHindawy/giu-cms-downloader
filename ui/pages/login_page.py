@@ -51,6 +51,17 @@ class LoginPage(ctk.CTkFrame):
         browse_btn = ctk.CTkButton(folder_frame, text="Browse...", width=74, command=self.browse_folder)
         browse_btn.pack(side="right")
 
+        from paths import get_app_dir
+        if not (get_app_dir() / "state.json").exists():
+            self.ignore_old_var = ctk.StringVar(value="0")
+            self.ignore_old_checkbox = ctk.CTkCheckBox(
+                container, text="Mark all existing files as already downloaded",
+                variable=self.ignore_old_var, onvalue="1", offvalue="0"
+            )
+            self.ignore_old_checkbox.pack(pady=(10, 0), anchor="w")
+        else:
+            self.ignore_old_var = None
+
         self.error_label = ctk.CTkLabel(container, text="", text_color="#e5484d")
         self.error_label.pack(pady=(4, 0))
 
@@ -96,10 +107,16 @@ class LoginPage(ctk.CTkFrame):
             self.continue_button.configure(state="normal", text="Continue")
             return
 
-        write_env({
-            "GIU_USERNAME": username,
-            "GIU_PASSWORD": password,
-            "DOWNLOAD_ROOT": download_root,
-        })
+        env = read_env()
+        env["GIU_USERNAME"] = username
+        env["GIU_PASSWORD"] = password
+        env["DOWNLOAD_ROOT"] = download_root
+        
+        if self.ignore_old_var and self.ignore_old_var.get() == "1":
+            env["IGNORE_OLD_FILES"] = "1"
+        else:
+            env.pop("IGNORE_OLD_FILES", None)
+
+        write_env(env)
 
         self.on_success(courses)
