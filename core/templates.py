@@ -4,7 +4,7 @@ from paths import get_app_dir
 
 TEMPLATES_FILE = get_app_dir() / "templates.json"
 
-DEFAULT_TEMPLATE_NAME = "Default"
+DEFAULT_TEMPLATE_NAME = "Structured"
 
 
 @dataclass
@@ -39,7 +39,19 @@ def load_templates() -> dict[str, StructureTemplate]:
 
     with TEMPLATES_FILE.open("r") as f:
         raw = json.load(f)
-    return {name: StructureTemplate(**data) for name, data in raw.items()}
+        
+    templates = {}
+    for name, data in raw.items():
+        if name == "Default":
+            name = "Structured"
+            data["name"] = name
+        templates[name] = StructureTemplate(**data)
+        
+    if "Structured" not in templates:
+        default = _default_template()
+        templates[default.name] = default
+        
+    return templates
 
 
 def save_templates(templates: dict[str, StructureTemplate]) -> None:

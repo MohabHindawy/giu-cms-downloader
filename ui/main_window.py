@@ -87,13 +87,30 @@ class MainWindow(ctk.CTk):
             btn = ctk.CTkButton(self.sidebar, text=name, command=lambda n=name: self.show_page(n), fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
             btn.pack(fill="x", padx=10, pady=5)
 
+        spacer = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        spacer.pack(fill="y", expand=True)
+
+        login_btn = ctk.CTkButton(self.sidebar, text="Update Login", command=self.open_login, fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray80", "gray26"), anchor="w")
+        login_btn.pack(fill="x", padx=10, pady=10, side="bottom")
+
         self.show_page("Courses")
+
+    def open_login(self):
+        for attr in ['sidebar', 'sidebar_sep', 'content', 'run_bar_sep', 'run_bar']:
+            if hasattr(self, attr) and getattr(self, attr):
+                getattr(self, attr).destroy()
+        
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
+        self.grid_columnconfigure(1, weight=0)
+        self.build_login_only()
 
     def _build_run_bar(self):
         self.run_button = ctk.CTkButton(self.run_bar, text="Run Now", command=self.start_run)
         self.run_button.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
 
-        self.status_label = ctk.CTkLabel(self.run_bar, text="Idle", anchor="w")
+        self.status_label = ctk.CTkLabel(self.run_bar, text="", anchor="w")
         self.status_label.grid(row=0, column=1, sticky="w", padx=10)
 
         self.progress_bar = ctk.CTkProgressBar(self.run_bar, width=300, mode="determinate")

@@ -23,7 +23,11 @@ def load_mapping() -> dict[str, CourseConfig]:
         if "flat" in data:
             flat = data.pop("flat")
             if "template_name" not in data:
-                data["template_name"] = "Flat" if flat else "Default"
+                data["template_name"] = "Flat" if flat else "Structured"
+        
+        if data.get("template_name") == "Default":
+            data["template_name"] = "Structured"
+            
         mapping[code] = CourseConfig(**data)
     return mapping
 

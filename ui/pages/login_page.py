@@ -15,43 +15,49 @@ class LoginPage(ctk.CTkFrame):
         ctk.CTkLabel(
             container, text="GIU CMS Downloader",
             font=ctk.CTkFont(size=20, weight="bold"),
-        ).grid(row=0, column=0, columnspan=2, pady=(0, 20))
+        ).pack(pady=(0, 20))
 
         env = read_env()
 
-        ctk.CTkLabel(container, text="Username").grid(row=1, column=0, sticky="w", pady=(0, 4))
-        self.username_entry = ctk.CTkEntry(container, width=260)
+        ctk.CTkLabel(container, text="Username").pack(anchor="w", pady=(0, 4))
+        self.username_entry = ctk.CTkEntry(container, width=300)
         self.username_entry.insert(0, env.get("GIU_USERNAME", ""))
-        self.username_entry.grid(row=2, column=0, columnspan=2, pady=(0, 12))
+        self.username_entry.pack(fill="x", pady=(0, 12))
 
-        ctk.CTkLabel(container, text="Password").grid(row=3, column=0, sticky="w", pady=(0, 4))
-        self.password_entry = ctk.CTkEntry(container, width=225, show="•")
+        ctk.CTkLabel(container, text="Password").pack(anchor="w", pady=(0, 4))
+        
+        pw_frame = ctk.CTkFrame(container, fg_color="transparent")
+        pw_frame.pack(fill="x", pady=(0, 12))
+        
+        self.password_entry = ctk.CTkEntry(pw_frame, show="•")
         self.password_entry.insert(0, env.get("GIU_PASSWORD", ""))
-        self.password_entry.grid(row=4, column=0, pady=(0, 12), sticky="w")
-
+        self.password_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        
         self.show_password = False
         self.eye_button = ctk.CTkButton(
-            container, text="👁", width=32, command=self.toggle_password,
+            pw_frame, text="👁", width=36, command=self.toggle_password,
         )
-        self.eye_button.grid(row=4, column=1, padx=(6, 0), pady=(0, 12))
+        self.eye_button.pack(side="right")
 
-        ctk.CTkLabel(container, text="Download folder (leave blank for default)").grid(
-            row=5, column=0, columnspan=2, sticky="w", pady=(0, 4)
-        )
-        self.folder_entry = ctk.CTkEntry(container, width=260)
+        ctk.CTkLabel(container, text="Download folder (leave blank for default)").pack(anchor="w", pady=(0, 4))
+        
+        folder_frame = ctk.CTkFrame(container, fg_color="transparent")
+        folder_frame.pack(fill="x", pady=(0, 4))
+        
+        self.folder_entry = ctk.CTkEntry(folder_frame)
         self.folder_entry.insert(0, env.get("DOWNLOAD_ROOT", ""))
-        self.folder_entry.grid(row=6, column=0, columnspan=2, pady=(0, 4), sticky="w")
+        self.folder_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
 
-        browse_btn = ctk.CTkButton(container, text="Browse...", width=90, command=self.browse_folder)
-        browse_btn.grid(row=6, column=1, sticky="e", pady=(0, 12))
+        browse_btn = ctk.CTkButton(folder_frame, text="Browse...", width=74, command=self.browse_folder)
+        browse_btn.pack(side="right")
 
         self.error_label = ctk.CTkLabel(container, text="", text_color="#e5484d")
-        self.error_label.grid(row=7, column=0, columnspan=2)
+        self.error_label.pack(pady=(4, 0))
 
         self.continue_button = ctk.CTkButton(
-            container, text="Continue", command=self.submit, width=260,
+            container, text="Continue", command=self.submit, width=300,
         )
-        self.continue_button.grid(row=8, column=0, columnspan=2, pady=(10, 0))
+        self.continue_button.pack(pady=(10, 0))
 
     def toggle_password(self):
         self.show_password = not self.show_password

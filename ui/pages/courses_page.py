@@ -73,7 +73,10 @@ class CoursesPage(ctk.CTkFrame):
             session = get_session(env["GIU_USERNAME"], env["GIU_PASSWORD"])
             courses = get_courses(session, BASE_URL)
         except Exception as e:
-            self.status_label.configure(text=f"Couldn't load courses: {e}")
+            self.status_label.configure(text=f"Couldn't load courses: {e}\n\nDid your password change?")
+            
+            retry_btn = ctk.CTkButton(self, text="Update Login", command=lambda: self.winfo_toplevel().open_login())
+            retry_btn.pack(pady=10)
             return
 
         self.status_label.destroy()
@@ -81,6 +84,9 @@ class CoursesPage(ctk.CTkFrame):
         mapping = load_mapping()
         templates = load_templates()
         template_names = list(templates.keys())
+        if "Flat" not in template_names:
+            template_names.append("Flat")
+        
         download_root = env.get("DOWNLOAD_ROOT", "")
 
         info_frame = ctk.CTkFrame(self, fg_color="transparent")

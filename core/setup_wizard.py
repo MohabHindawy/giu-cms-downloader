@@ -123,7 +123,7 @@ def configure_course(
     return CourseConfig(
         display_name=display_name,
         folder=folder,
-        template_name="Flat" if flat else "Default",
+        template_name="Flat" if flat else "Structured",
     )
 
 
