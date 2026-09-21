@@ -29,7 +29,7 @@ def _patched_init(self, *args, **kwargs):
 ctk.CTkScrollableFrame.__init__ = _patched_init
 
 
-ctk.set_appearance_mode("dark")
+ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 
@@ -147,6 +147,11 @@ class MainWindow(ctk.CTk):
         self.cached_courses = courses
         self.login_frame.destroy()
         self.build_main_layout()
+        
+        from core.course_config import read_env
+        env = read_env()
+        if env.get("IGNORE_OLD_FILES") == "1":
+            self.after(500, self.start_run)
 
     def build_main_layout(self):
         self.grid_rowconfigure(0, weight=1)
