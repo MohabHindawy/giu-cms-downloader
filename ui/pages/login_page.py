@@ -53,7 +53,7 @@ class LoginPage(ctk.CTkFrame):
         browse_btn.pack(side="right")
 
         if not (get_app_dir() / "state.json").exists():
-            self.ignore_old_var = ctk.StringVar(value="0")
+            self.ignore_old_var = ctk.StringVar(value="1")
             self.ignore_old_checkbox = ctk.CTkCheckBox(
                 container, text="Mark all existing files as already downloaded",
                 variable=self.ignore_old_var, onvalue="1", offvalue="0"
