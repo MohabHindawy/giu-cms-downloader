@@ -30,6 +30,8 @@ jobs:
             --clean `
             --noconfirm `
             --onefile `
+            --noconsole `
+            --add-data "assets;assets" `
             --collect-all customtkinter `
             --name giu-cms-downloader `
             app.py

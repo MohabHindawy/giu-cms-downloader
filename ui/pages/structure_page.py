@@ -195,3 +195,5 @@ class StructurePage(ctk.CTkFrame):
             groups=groups,
         )
         save_templates(self.templates)
+        
+        messagebox.showinfo("Saved", "Folder structure saved successfully!")
