@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkinter import messagebox
 
 from core.blocking import BlockingRule, load_rules, save_rules
 
@@ -90,8 +91,6 @@ class BlockingPage(ctk.CTkScrollableFrame):
         self.size_entry = ctk.CTkEntry(size_body, width=70)
         self.size_entry.insert(0, size_rule.value if size_rule else "50")
         self.size_entry.pack(side="left", padx=6)
-        self.size_entry.bind("<FocusOut>", lambda e: self._save())
-        self.size_entry.bind("<Return>", lambda e: self._save())
 
         if self.size_enabled.get():
             self.size_entry.configure(state="normal", text_color=("gray10", "gray90"))
@@ -139,12 +138,18 @@ class BlockingPage(ctk.CTkScrollableFrame):
         add_btn = ctk.CTkButton(add_frame, text="Add", width=50, command=self._add_name)
         add_btn.pack(side="left", padx=(6, 0))
 
+        bottom_bar = ctk.CTkFrame(self, fg_color="transparent")
+        bottom_bar.pack(fill="x", padx=10, pady=(10, 10))
+
+        save_btn = ctk.CTkButton(bottom_bar, text="Save Changes", command=self._save)
+        save_btn.pack(side="right")
+
     def _on_size_toggle(self):
         if self.size_enabled.get():
             self.size_entry.configure(state="normal", text_color=("gray10", "gray90"))
         else:
             self.size_entry.configure(state="disabled", text_color="gray50")
-        self._save()
+
 
     def _add_tag(self, text: str):
         tag = NameTag(self.tags_frame, text, on_remove=self._remove_tag)
@@ -154,7 +159,7 @@ class BlockingPage(ctk.CTkScrollableFrame):
     def _remove_tag(self, tag: NameTag):
         self.name_tags.remove(tag)
         tag.destroy()
-        self._save()
+
 
     def _add_name(self):
         text = self.name_entry.get().strip()
@@ -165,7 +170,7 @@ class BlockingPage(ctk.CTkScrollableFrame):
             return
         self._add_tag(text)
         self.name_entry.delete(0, "end")
-        self._save()
+
 
     def _save(self):
         rules = []
@@ -182,3 +187,4 @@ class BlockingPage(ctk.CTkScrollableFrame):
             rules.append(BlockingRule(type="name_contains", value=tag.text))
 
         save_rules(rules)
+        messagebox.showinfo("Saved", "Blocking rules saved successfully!")
