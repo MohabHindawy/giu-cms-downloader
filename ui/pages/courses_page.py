@@ -1,7 +1,8 @@
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from pathlib import Path
 from core.auth import get_session
 from core.config import BASE_URL
 from core.course_config import CourseConfig, load_mapping, read_env, save_mapping
@@ -29,16 +30,18 @@ class CourseRow(ctk.CTkFrame):
         header.grid(row=0, column=0, columnspan=3, sticky="w", padx=10, pady=(10, 4))
 
         default_name = existing.display_name if existing else course.name
-        default_folder = (
-            existing.folder if existing else f"{download_root}/{default_name}"
-        )
         default_template = existing.template_name if existing else DEFAULT_TEMPLATE_NAME
+        if existing:
+            default_folder = existing.folder
+            self.auto_folder_parent = Path(existing.folder).parent
+        else:
+            self.auto_folder_parent = Path(download_root)
+            default_folder = str(self.auto_folder_parent / default_name)
 
         ctk.CTkLabel(self, text="Folder name").grid(
             row=1, column=0, sticky="w", padx=10
         )
-        self.download_root = download_root
-        self.manual_folder_edited = existing is not None
+        self.manual_folder_edited = False
 
         self.name_var = ctk.StringVar(value=default_name)
         self.name_entry = ctk.CTkEntry(self, width=200, textvariable=self.name_var)
@@ -67,9 +70,12 @@ class CourseRow(ctk.CTkFrame):
         self.manual_folder_edited = True
 
     def _on_name_change(self, *args):
-        if not self.manual_folder_edited:
-            new_name = self.name_var.get().strip()
-            self.folder_var.set(f"{self.download_root}/{new_name}")
+        if self.manual_folder_edited:
+            return
+    
+        new_name = self.name_var.get().strip()
+        if new_name:
+            self.folder_var.set(str(self.auto_folder_parent / new_name))
 
     def browse(self):
         path = filedialog.askdirectory()
@@ -129,8 +135,6 @@ class CoursesPage(ctk.CTkFrame):
         if "Flat" not in template_names:
             template_names.append("Flat")
 
-        from pathlib import Path
-
         download_root = env.get("DOWNLOAD_ROOT", "").strip()
         if not download_root:
             download_root = str(Path.home() / "Downloads" / "GIU")
@@ -177,16 +181,23 @@ class CoursesPage(ctk.CTkFrame):
         mapping = load_mapping()
         for row in self.rows:
             cfg = row.to_config()
-            if not cfg.folder:
-                from tkinter import messagebox
 
+            if not cfg.display_name:
                 messagebox.showerror(
-                    "Invalid Folder",
-                    f"The destination folder for {row.course.name} cannot be blank.\n\nPlease choose a valid path before saving.",
+                    "Invalid Folder Name",
+                    f"The folder name for {row.course.name} cannot be blank.",
                 )
                 return
-            mapping[row.course.code] = cfg
-        save_mapping(mapping)
-        from tkinter import messagebox
 
+            if not cfg.folder:
+                messagebox.showerror(
+                    "Invalid Folder",
+                    f"The destination folder for {row.course.name} cannot be blank.\n\n"
+                    "Please choose a valid path before saving.",
+                )
+                return
+
+            mapping[row.course.code] = cfg
+
+        save_mapping(mapping)
         messagebox.showinfo("Saved", "Course configuration saved successfully!")
